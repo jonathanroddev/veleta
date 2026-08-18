@@ -1,0 +1,23 @@
+schema_version = "1.0.0"
+
+id = "vane"
+version = "0.1.0"
+name = "Vane"
+tagline = "Drive objects in real time from vane motion sensors"
+maintainer = "Jonathan Rodríguez <jonathanroddev@gmail.com>"
+type = "add-on"
+
+website = "https://github.com/jonathanroddev/vane"
+
+tags = ["Animation", "Object"]
+
+blender_version_min = "4.2.0"
+
+# GPL v3 or later, and not by accident: the extensions platform only
+# accepts free extensions, and anything importing `bpy` has to be
+# GPL-compatible anyway. Only this directory is under these terms — see
+# the licence map in the repository README.
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+network = "Receives orientation from the vane core running on this machine."

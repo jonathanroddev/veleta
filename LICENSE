@@ -1,0 +1,32 @@
+Copyright (c) 2026 Jonathan Rodríguez. All rights reserved.
+
+THIS REPOSITORY IS NOT UNDER A SINGLE LICENCE. Which terms apply depends on
+which directory a file is in, and the split is deliberate — it is the
+frontier between the parts of the product that are proprietary and the part
+that must be free software.
+
+  blender/    GNU General Public License v3 or later.  See blender/LICENSE.
+              Anything that imports `bpy` and is published has to be
+              GPL-compatible, because Blender's Python API is part of
+              Blender and Blender is GPL.
+
+  core/       Proprietary, all rights reserved.  See core/LICENSE.
+  firmware/   Proprietary, all rights reserved.  See firmware/LICENSE.
+              Neither imports `bpy`. The core is an independent program
+              that runs, and is useful, with no Blender on the machine, and
+              speaks to consumers over a documented network protocol. The
+              firmware is not PC software at all: it is burned onto a
+              microcontroller.
+
+  everything  Proprietary, all rights reserved, under the terms in
+  else        core/LICENSE, unless a LICENSE file in a nearer directory
+              says otherwise. This includes docs/, scripts/, samples/ and
+              tests/.
+
+The rule that keeps this coherent: the extension package uploaded to the
+Blender extensions platform contains ONLY the contents of blender/. The
+core is never distributed inside it — the extension consumes the core over
+the network and does not bundle it.
+
+Publication of this source is not a grant of any licence to it. See each
+LICENSE file for the terms that do apply.

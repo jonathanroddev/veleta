@@ -1,0 +1,32 @@
+# --- Per-board secrets: WiFi credentials, target IP, device id ---
+# Copy secrets.example.h to secrets.h and edit it there. Never commit an
+# SSID, a password or a LAN IP.
+secrets.h
+
+# --- Microcontroller dumps ---
+# The backups in firmware/wired/backups/ are kept on disk as a rescue copy
+# of the old Uno, but they are binary blobs of no use to anyone cloning the
+# repository. NOTE: being ignored, they exist ONLY on the machine that made
+# them — a fresh clone will not have them.
+*.hex
+*.eep
+*.elf
+
+# --- Build output ---
+dist/
+build/
+*.zip
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# --- Editors and OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

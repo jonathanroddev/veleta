@@ -1,0 +1,29 @@
+Copyright (c) 2026 Jonathan Rodríguez. All rights reserved.
+
+PROPRIETARY SOFTWARE — NOT OPEN SOURCE
+
+This directory and everything in it is proprietary software. The source is
+published so that it can be read, inspected and reviewed; publication is
+not a grant of any licence.
+
+No permission is granted to use, run, copy, modify, adapt, translate,
+merge, publish, distribute, sublicense or sell this software, in whole or
+in part, whether in source or in binary form, except:
+
+  a) under a separate written agreement with the copyright holder; or
+  b) as the terms accompanying an official binary distribution allow, for
+     the person that binary was supplied to.
+
+THIS LICENCE DOES NOT COVER THE `blender/` DIRECTORY, which is licensed
+under the GNU General Public License version 3 or later. See
+`blender/LICENSE` and the licence map in the repository README.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Statutory consumer rights are unaffected by this notice.
