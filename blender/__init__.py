@@ -1,7 +1,7 @@
-"""Vane — motion sensors driving Blender objects in real time.
+"""Veleta — motion sensors driving Blender objects in real time.
 
 WHAT THIS EXTENSION IS, AND IS NOT
-    It is a consumer. It connects to the vane core — a separate program
+    It is a consumer. It connects to the veleta core — a separate program
     that talks to the sensors, fuses their readings and re-exposes the
     result over UDP — and applies what arrives to the scene. It does not
     read sensors, does not open serial ports, and never bundles or ships
@@ -12,7 +12,7 @@ WHAT THIS EXTENSION IS, AND IS NOT
     own terms. See the licence map in the repository README.
 
 WHAT YOU NEED
-    The vane core, running. It comes with the hardware kit. With no core
+    The veleta core, running. It comes with the hardware kit. With no core
     running, Connect says so and nothing moves.
 """
 
@@ -136,15 +136,15 @@ def _demo_pump():
 
 
 # -------------------------------------------------------------- operators
-class VANE_OT_connect(Operator):
-    bl_idname = "vane.connect"
+class VELETA_OT_connect(Operator):
+    bl_idname = "veleta.connect"
     bl_label = "Connect"
-    bl_description = "Subscribe to the vane core and start moving objects"
+    bl_description = "Subscribe to the veleta core and start moving objects"
 
     def execute(self, context):
         global _client, _status, _warning
         if _demo is not None:
-            bpy.ops.vane.demo_stop()
+            bpy.ops.veleta.demo_stop()
         prefs = _prefs()
         client = CoreClient(prefs.host, prefs.port, prefs.ttl)
         try:
@@ -164,8 +164,8 @@ class VANE_OT_connect(Operator):
         return {"FINISHED"}
 
 
-class VANE_OT_disconnect(Operator):
-    bl_idname = "vane.disconnect"
+class VELETA_OT_disconnect(Operator):
+    bl_idname = "veleta.disconnect"
     bl_label = "Disconnect"
     bl_description = "Stop receiving and drop the subscription"
 
@@ -181,8 +181,8 @@ class VANE_OT_disconnect(Operator):
         return {"FINISHED"}
 
 
-class VANE_OT_calibrate(Operator):
-    bl_idname = "vane.calibrate"
+class VELETA_OT_calibrate(Operator):
+    bl_idname = "veleta.calibrate"
     bl_label = "Calibrate"
     bl_description = ("Take the current orientation of every sensor as its "
                       "zero. Hold the reference pose, then press this")
@@ -202,8 +202,8 @@ class VANE_OT_calibrate(Operator):
         return {"FINISHED"}
 
 
-class VANE_OT_recenter(Operator):
-    bl_idname = "vane.recenter"
+class VELETA_OT_recenter(Operator):
+    bl_idname = "veleta.recenter"
     bl_label = "Recenter sensor"
     bl_description = ("Re-zero one sensor. This is how you cancel the yaw "
                       "drift of a sensor with no magnetometer")
@@ -221,8 +221,8 @@ class VANE_OT_recenter(Operator):
         return {"FINISHED"}
 
 
-class VANE_OT_demo(Operator):
-    bl_idname = "vane.demo"
+class VELETA_OT_demo(Operator):
+    bl_idname = "veleta.demo"
     bl_label = "Play demo"
     bl_description = ("Replay the recording bundled with this extension. "
                       "No sensors and no core needed — it shows what the "
@@ -231,7 +231,7 @@ class VANE_OT_demo(Operator):
     def execute(self, context):
         global _demo, _status
         if _demo is not None:                      # pressed again: stop
-            return bpy.ops.vane.demo_stop()
+            return bpy.ops.veleta.demo_stop()
         if _client is not None and _client.connected:
             self.report({"ERROR"},
                         "Disconnect first: the demo and a live sensor would "
@@ -253,8 +253,8 @@ class VANE_OT_demo(Operator):
         return {"FINISHED"}
 
 
-class VANE_OT_demo_stop(Operator):
-    bl_idname = "vane.demo_stop"
+class VELETA_OT_demo_stop(Operator):
+    bl_idname = "veleta.demo_stop"
     bl_label = "Stop demo"
     bl_description = "Stop the bundled demo"
 
@@ -268,12 +268,12 @@ class VANE_OT_demo_stop(Operator):
 
 
 # ------------------------------------------------------------- preferences
-class VanePreferences(AddonPreferences):
+class VeletaPreferences(AddonPreferences):
     bl_idname = __package__
 
     host: StringProperty(
         name="Core host", default="127.0.0.1",
-        description="Where the vane core runs. Normally this machine")
+        description="Where the veleta core runs. Normally this machine")
     port: IntProperty(
         name="Core port", default=1400, min=1, max=65535,
         description="The core's control port (CONTROL_PORT in its config.env)")
@@ -324,12 +324,12 @@ class VanePreferences(AddonPreferences):
 
 
 # --------------------------------------------------------------- interface
-class VANE_PT_panel(Panel):
-    bl_label = "Vane"
-    bl_idname = "VANE_PT_panel"
+class VELETA_PT_panel(Panel):
+    bl_label = "Veleta"
+    bl_idname = "VELETA_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Vane"
+    bl_category = "Veleta"
 
     def draw(self, context):
         layout = self.layout
@@ -339,9 +339,9 @@ class VANE_PT_panel(Panel):
 
         row = layout.row(align=True)
         if connected:
-            row.operator("vane.disconnect", icon="UNLINKED")
+            row.operator("veleta.disconnect", icon="UNLINKED")
         else:
-            row.operator("vane.connect", icon="LINKED")
+            row.operator("veleta.connect", icon="LINKED")
             row.enabled = not demo_running
 
         if not connected:
@@ -349,9 +349,9 @@ class VANE_PT_panel(Panel):
             # no core to connect to. This is what they can press.
             row = layout.row(align=True)
             if demo_running:
-                row.operator("vane.demo_stop", icon="PAUSE")
+                row.operator("veleta.demo_stop", icon="PAUSE")
             else:
-                row.operator("vane.demo", icon="PLAY")
+                row.operator("veleta.demo", icon="PLAY")
 
         box = layout.box()
         box.label(text=_status, icon="INFO")
@@ -364,27 +364,27 @@ class VANE_PT_panel(Panel):
                     box.label(text=line.strip(), icon="ERROR")
 
         if connected:
-            layout.operator("vane.calibrate", icon="ORIENTATION_GIMBAL")
+            layout.operator("veleta.calibrate", icon="ORIENTATION_GIMBAL")
             if _seen:
                 col = layout.column(align=True)
                 col.label(text="Sensors:")
                 for dev in sorted(_seen):
                     row = col.row(align=True)
                     row.label(text=f"{dev} [{_seen[dev]}]")
-                    op = row.operator("vane.recenter", text="", icon="LOOP_BACK")
+                    op = row.operator("veleta.recenter", text="", icon="LOOP_BACK")
                     op.device = dev
 
 
 # --------------------------------------------------------------- registration
 _classes = (
-    VanePreferences,
-    VANE_OT_connect,
-    VANE_OT_disconnect,
-    VANE_OT_calibrate,
-    VANE_OT_recenter,
-    VANE_OT_demo,
-    VANE_OT_demo_stop,
-    VANE_PT_panel,
+    VeletaPreferences,
+    VELETA_OT_connect,
+    VELETA_OT_disconnect,
+    VELETA_OT_calibrate,
+    VELETA_OT_recenter,
+    VELETA_OT_demo,
+    VELETA_OT_demo_stop,
+    VELETA_PT_panel,
 )
 
 
@@ -392,7 +392,7 @@ def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
     if _prefs().auto_connect:
-        bpy.ops.vane.connect()
+        bpy.ops.veleta.connect()
 
 
 def unregister():

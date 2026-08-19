@@ -1,4 +1,4 @@
-# blender — the Vane extension
+# blender — the Veleta extension
 
 The Blender side: it connects to the [core](../core/), receives orientation
 and applies it to objects in the scene.
@@ -25,7 +25,7 @@ here. `scripts/build_extension.py` enforces it.
 
 ```bash
 python3 ../scripts/build_extension.py
-blender --command extension validate ../dist/vane-<version>.zip
+blender --command extension validate ../dist/veleta-<version>.zip
 ```
 
 ## What is in here

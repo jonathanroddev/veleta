@@ -16,8 +16,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from vane_core.config import load as load_config      # noqa: E402
-from vane_core.frames import Layout, parse_line       # noqa: E402
+from veleta_core.config import load as load_config      # noqa: E402
+from veleta_core.frames import Layout, parse_line       # noqa: E402
 
 
 def load_layout():

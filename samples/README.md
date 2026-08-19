@@ -6,8 +6,8 @@ One JSON object per line: `{"t": <seconds from the first frame>, "line":
 
 ```bash
 cd core
-python3 -m vane_core --play ../samples/wt901_desk_wobble.jsonl --loop
-python3 -m vane_core --record ../samples/new.jsonl
+python3 -m veleta_core --play ../samples/wt901_desk_wobble.jsonl --loop
+python3 -m veleta_core --record ../samples/new.jsonl
 ```
 
 These hold the **sensor** stream, not the core's output, so replaying one

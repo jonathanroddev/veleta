@@ -7,7 +7,7 @@ Blender's text editor, where `__file__` frequently does not exist, and had
 to recover their own folder from the open text datablocks. The core is an
 ordinary process, so the file is simply looked up in order:
 
-    1. $VANE_CORE_CONFIG, if it points at a file.
+    1. $VELETA_CORE_CONFIG, if it points at a file.
     2. config.env in the current working directory.
     3. config.env next to the package (core/config.env, the shipped one).
 """
@@ -57,7 +57,7 @@ def find_config_path(explicit=None):
     candidates = []
     if explicit:
         candidates.append(explicit)
-    env = os.environ.get("VANE_CORE_CONFIG")
+    env = os.environ.get("VELETA_CORE_CONFIG")
     if env:
         candidates.append(env)
     candidates.append(os.path.join(os.getcwd(), "config.env"))

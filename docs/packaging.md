@@ -4,7 +4,7 @@ Two distributable artifacts, and neither is built by hand.
 
 | Artifact | Built by | Goes to |
 |---|---|---|
-| Extension package (`vane-<version>.zip`) | `scripts/build_extension.py` | The Blender extensions platform, and the kit as an offline copy |
+| Extension package (`veleta-<version>.zip`) | `scripts/build_extension.py` | The Blender extensions platform, and the kit as an offline copy |
 | Core installer, one per OS | Not built yet — see below | The download page, and the kit |
 
 ## Versioning
@@ -16,7 +16,7 @@ The number lives in `VERSION` at the repository root. Three places must
 agree with it, and `tests/test_version.py` fails the build when they do
 not:
 
-- `core/vane_core/__init__.py` → `__version__`
+- `core/veleta_core/__init__.py` → `__version__`
 - `blender/blender_manifest.toml` → `version`
 - `blender/__init__.py` → `VERSION`
 
@@ -28,7 +28,7 @@ the symptoms alone.
 ## Building the extension package
 
 ```bash
-python3 scripts/build_extension.py            # writes dist/vane-<version>.zip
+python3 scripts/build_extension.py            # writes dist/veleta-<version>.zip
 python3 scripts/build_extension.py --check    # checks only, builds nothing
 ```
 
@@ -51,7 +51,7 @@ reporting a fault in a build you no longer have is unanswerable.
 Before uploading, validate with Blender itself:
 
 ```bash
-blender --command extension validate dist/vane-<version>.zip
+blender --command extension validate dist/veleta-<version>.zip
 ```
 
 > Never run: there is no Blender on the development machine. This is the

@@ -1,8 +1,9 @@
-# Vane
+# Veleta
 
-**Motion sensors that drive a 3D scene in real time.** A vane is the thing
-on a roof whose only job is to tell you which way something is pointing,
-which is exactly what this does: it reports orientation, not position.
+**Motion sensors that drive a 3D scene in real time.** *Veleta* is Spanish
+for the weather vane on a roof, whose only job is to tell you which way
+something is pointing — exactly what this does: it reports orientation, not
+position.
 
 An IMU sensor streams its attitude to a small program on your machine; that
 program fuses and zeroes it and re-exposes it over a documented protocol;
@@ -60,8 +61,8 @@ The core, and a sensor if you have one:
 
 ```bash
 cd core
-python3 -m vane_core                       # listen for sensors on UDP 1399
-python3 -m vane_core --play ../samples/wt901_desk_wobble.jsonl --loop
+python3 -m veleta_core                       # listen for sensors on UDP 1399
+python3 -m veleta_core --play ../samples/wt901_desk_wobble.jsonl --loop
 ```
 
 The `--play` line is the point of the recording mode: **the whole pipeline
@@ -73,7 +74,7 @@ apart "the sensor is broken" from "everything after it is broken", which is
 otherwise a slow afternoon.
 
 Then, in Blender, install the extension and press **Connect** in the
-**Vane** tab of the 3D viewport sidebar. Full walkthrough in
+**Veleta** tab of the 3D viewport sidebar. Full walkthrough in
 [`docs/installation.md`](docs/installation.md).
 
 **With no kit at all** there is no core either — it ships with the
@@ -100,9 +101,9 @@ sockets, and every recording in `samples/`.
 ## Layout
 
 ```
-vane/
+veleta/
 ├── firmware/     wifi/ (ESP32, Nano+ESP-01) · wired/ (Nano, USB serial)
-├── core/         vane_core/ (the program) · tools/ (diagnostics, fake sensor)
+├── core/         veleta_core/ (the program) · tools/ (diagnostics, fake sensor)
 ├── blender/      the extension: manifest, panel, client, axis mapping, demo
 ├── docs/         protocol · context · hardware · installation · packaging
 ├── scripts/      build_extension.py

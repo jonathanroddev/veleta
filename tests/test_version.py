@@ -25,7 +25,7 @@ class TestVersionsAgree(unittest.TestCase):
         self.assertRegex(self.declared, r"^\d+\.\d+\.\d+$")
 
     def test_core_matches(self):
-        from vane_core import __version__
+        from veleta_core import __version__
         self.assertEqual(__version__, self.declared)
 
     def test_manifest_matches(self):

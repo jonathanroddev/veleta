@@ -43,4 +43,4 @@ and versions follow [semantic versioning](https://semver.org/).
   therefore applied AFTER the calibration offset, where it used to be
   applied before. See "known differences" in `docs/context.md`.
 
-[Unreleased]: https://github.com/jonathanroddev/vane
+[Unreleased]: https://github.com/jonathanroddev/veleta

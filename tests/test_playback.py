@@ -12,10 +12,10 @@ import tempfile
 import unittest
 
 import context
-from vane_core.config import DEFAULTS
-from vane_core.engine import Engine
-from vane_core.recorder import Recorder
-from vane_core.sources import FileSource
+from veleta_core.config import DEFAULTS
+from veleta_core.engine import Engine
+from veleta_core.recorder import Recorder
+from veleta_core.sources import FileSource
 
 
 def fused_frame(device, roll, pitch, yaw):

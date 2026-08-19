@@ -3,9 +3,9 @@
 import unittest
 
 import context
-from vane_core import quat
-from vane_core.config import DEFAULTS
-from vane_core.engine import Engine
+from veleta_core import quat
+from veleta_core.config import DEFAULTS
+from veleta_core.engine import Engine
 
 
 def fused_frame(device, roll, pitch, yaw):

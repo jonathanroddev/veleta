@@ -186,11 +186,11 @@ an ESP32, ~200 from a Nano + ESP-01.
 ## 5. Into Blender
 
 1. Start the core and leave it running:
-   `cd core && python3 -m vane_core`
+   `cd core && python3 -m veleta_core`
 2. Keep the sensor **still for the first ~3 s**: the core is estimating the
    gyro bias and deliberately emits nothing until that finishes. Watch for
    `gyro bias` in the core's output.
-3. In Blender, open the **Vane** tab in the sidebar (`N`), press
+3. In Blender, open the **Veleta** tab in the sidebar (`N`), press
    **Connect**, and set **Sensor → object** in the extension's preferences
    to your scene object's exact name.
 4. Hold the sensor in the reference pose and press **Calibrate**. If you

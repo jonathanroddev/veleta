@@ -14,10 +14,10 @@ import unittest
 
 import context
 from client import CoreClient, version_warning
-from vane_core import PROTOCOL_VERSION, __version__
-from vane_core.config import DEFAULTS
-from vane_core.engine import Engine
-from vane_core.server import Server
+from veleta_core import PROTOCOL_VERSION, __version__
+from veleta_core.config import DEFAULTS
+from veleta_core.engine import Engine
+from veleta_core.server import Server
 
 
 def fused_frame(device, roll, pitch, yaw):

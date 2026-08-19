@@ -205,6 +205,6 @@ and replays it by itself, which is a different mechanism for a different
 audience. See `blender/playback.py`.
 
 ```bash
-python3 -m vane_core --record ../samples/new.jsonl     # capture
-python3 -m vane_core --play ../samples/new.jsonl --loop # replay
+python3 -m veleta_core --record ../samples/new.jsonl     # capture
+python3 -m veleta_core --play ../samples/new.jsonl --loop # replay
 ```

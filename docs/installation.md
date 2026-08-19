@@ -12,7 +12,7 @@ The core is the program that talks to the sensors. It comes with the kit,
 as an installer for your operating system.
 
 1. Open the installer and follow it.
-2. Launch **vane core**. It reports the port it is listening on and waits.
+2. Launch **veleta core**. It reports the port it is listening on and waits.
 3. Leave it running. Blender talks to it while you work.
 
 The core does not need an internet connection and does not send anything
@@ -27,14 +27,14 @@ See [`packaging.md`](packaging.md#signing) for where that stands.
 From inside Blender, which is the easy path and keeps it updated:
 
 1. **Edit → Preferences → Get Extensions**.
-2. Search for **Vane**.
+2. Search for **Veleta**.
 3. **Install**, then tick it to enable it.
 
 Without an internet connection, the kit also carries the extension as a
 zip:
 
 1. **Edit → Preferences → Add-ons → ▾ → Install from Disk…**
-2. Pick `vane-<version>.zip` from the kit.
+2. Pick `veleta-<version>.zip` from the kit.
 
 Blender 4.2 or newer is required.
 
@@ -43,7 +43,7 @@ Blender 4.2 or newer is required.
 1. Put the sensor **flat and still** on the desk. The core spends its first
    couple of seconds estimating the gyro's resting bias, and a sensor that
    moves during it will drift afterwards.
-2. In Blender, open the **Vane** tab in the 3D viewport sidebar
+2. In Blender, open the **Veleta** tab in the 3D viewport sidebar
    (press `N` if the sidebar is hidden).
 3. Press **Connect**. The panel reports the core's version and the sensors
    it can see.
@@ -89,7 +89,7 @@ out whether a fault is the sensor's. The two ways below are not the same
 thing: they check different halves of the product, so which one you want
 depends on what you are trying to find out.
 
-**Press "Play demo" in the Vane panel** — checks the *extension*. A short
+**Press "Play demo" in the Veleta panel** — checks the *extension*. A short
 recording ships inside the extension itself and replays against your scene,
 with no core and no network involved. Set **Sensor → object** first, or the
 movement has nowhere to go. If the object moves, then Blender, the
@@ -101,7 +101,7 @@ the radio*. The core replays the recording through its real parsing, fusion
 and calibration, exactly as live hardware would:
 
 ```bash
-vane-core --play samples/wt901_desk_wobble.jsonl --loop
+veleta-core --play samples/wt901_desk_wobble.jsonl --loop
 ```
 
 Connect from Blender as usual and the object moves. If it does, and a real

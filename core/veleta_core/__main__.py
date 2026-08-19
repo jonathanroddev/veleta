@@ -1,9 +1,9 @@
-"""vane core — command line entry point.
+"""veleta core — command line entry point.
 
-    python3 -m vane_core                      # listen to sensors over UDP
-    python3 -m vane_core --play samples/x.jsonl --loop
-    python3 -m vane_core --record samples/new.jsonl
-    python3 -m vane_core --source serial --serial-port /dev/cu.usbserial-110
+    python3 -m veleta_core                      # listen to sensors over UDP
+    python3 -m veleta_core --play samples/x.jsonl --loop
+    python3 -m veleta_core --record samples/new.jsonl
+    python3 -m veleta_core --source serial --serial-port /dev/cu.usbserial-110
 
 The loop is deliberately dull: drain the source, fuse, hand each pose to
 the subscribers, answer any command that arrived. Nothing blocks, so a
@@ -23,12 +23,12 @@ from .sources import FileSource, UdpSource, open_serial_source
 
 
 def _log(msg):
-    print(f"[vane-core] {msg}", flush=True)
+    print(f"[veleta-core] {msg}", flush=True)
 
 
 def build_parser():
     p = argparse.ArgumentParser(
-        prog="vane-core",
+        prog="veleta-core",
         description="Reads IMU sensors, fuses their orientation and "
                     "re-exposes it over UDP for Blender, Godot or anything "
                     "else that speaks the protocol.")
@@ -55,7 +55,7 @@ def build_parser():
     p.add_argument("--quiet", action="store_true",
                    help="only report errors")
     p.add_argument("--version", action="version",
-                   version=f"vane core {__version__}")
+                   version=f"veleta core {__version__}")
     return p
 
 
@@ -64,7 +64,7 @@ def main(argv=None):
     log = (lambda m: None) if args.quiet else _log
 
     cfg, cfg_path = load_config(args.config)
-    log(f"vane core {__version__}")
+    log(f"veleta core {__version__}")
     log(f"config: {cfg_path or 'defaults (no config.env found)'}")
 
     source_kind = args.source or ("file" if args.play else cfg["SOURCE"])
@@ -104,7 +104,7 @@ def main(argv=None):
 
     recorder = None
     if args.record:
-        recorder = Recorder(args.record, note=f"vane core {__version__}")
+        recorder = Recorder(args.record, note=f"veleta core {__version__}")
         log(f"recording to {args.record}")
 
     calib_deadline = None

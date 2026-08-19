@@ -1,4 +1,4 @@
-# Guide for Claude Code — vane
+# Guide for Claude Code — veleta
 
 Read [`docs/context.md`](docs/context.md) for the decisions and
 [`docs/protocol.md`](docs/protocol.md) for the wire formats before changing
@@ -64,7 +64,7 @@ boundary**, not a preference:
 - **The extension has never run inside Blender.** There is none on this
   machine. `client.py` and `axes.py` are tested; `__init__.py`, the
   manifest and the panel are written but unexecuted. First job on a machine
-  with Blender: `blender --command extension validate dist/vane-<v>.zip`.
+  with Blender: `blender --command extension validate dist/veleta-<v>.zip`.
 - **No sensor has ever been connected.** Firmware written, unflashed; the
   AVR sketch compiles (`arduino:avr:nano`, 38% flash / 35% RAM), the ESP32
   one is compile-untested.
@@ -89,9 +89,9 @@ boundary**, not a preference:
 python3 -m unittest discover -s tests -t tests     # the suite
 
 cd core
-python3 -m vane_core --play ../samples/wt901_desk_wobble.jsonl --loop
+python3 -m veleta_core --play ../samples/wt901_desk_wobble.jsonl --loop
 # ...or a live fake sensor, in two terminals:
-python3 -m vane_core
+python3 -m veleta_core
 python3 tools/fake_sensor.py 1399 0 50 127.0.0.1 WT53abc
 python3 tools/fake_sensor.py 1399 0 20 127.0.0.1 ESP32_A raw6
 ```

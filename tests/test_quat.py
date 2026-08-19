@@ -9,7 +9,7 @@ import math
 import unittest
 
 import context
-from vane_core import quat
+from veleta_core import quat
 
 
 def rot_x(a):

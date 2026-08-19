@@ -1,13 +1,13 @@
 schema_version = "1.0.0"
 
-id = "vane"
+id = "veleta"
 version = "0.1.0"
-name = "Vane"
-tagline = "Drive objects in real time from vane motion sensors"
+name = "Veleta"
+tagline = "Drive objects in real time from Veleta motion sensors"
 maintainer = "Jonathan Rodríguez <jonathanroddev@gmail.com>"
 type = "add-on"
 
-website = "https://github.com/jonathanroddev/vane"
+website = "https://github.com/jonathanroddev/veleta"
 
 tags = ["Animation", "Object"]
 
@@ -20,4 +20,4 @@ blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
 
 [permissions]
-network = "Receives orientation from the vane core running on this machine."
+network = "Receives orientation from the veleta core running on this machine."

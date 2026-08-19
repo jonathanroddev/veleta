@@ -1,4 +1,4 @@
-"""UDP client for the vane core.
+"""UDP client for the veleta core.
 
 Deliberately free of `bpy`: everything in this file can be exercised
 without Blender, which is where the awkward parts live — the subscription

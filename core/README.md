@@ -17,11 +17,11 @@ being readable here is not a grant of licence.
 ## Running it
 
 ```bash
-python3 -m vane_core                          # WiFi sensors on UDP 1399
-python3 -m vane_core --play ../samples/wt901_desk_wobble.jsonl --loop
-python3 -m vane_core --record ../samples/new.jsonl
-python3 -m vane_core --source serial --serial-port /dev/cu.usbserial-110
-python3 -m vane_core --help
+python3 -m veleta_core                          # WiFi sensors on UDP 1399
+python3 -m veleta_core --play ../samples/wt901_desk_wobble.jsonl --loop
+python3 -m veleta_core --record ../samples/new.jsonl
+python3 -m veleta_core --source serial --serial-port /dev/cu.usbserial-110
+python3 -m veleta_core --help
 ```
 
 Consumers connect on UDP **1400** and subscribe; the core streams poses
@@ -32,7 +32,7 @@ back to whoever asked, and answers `calibrate`, `recenter`, `devices` and
 
 Everything lives in [`config.env`](config.env) — KEY=value, read with no
 external dependency. Ports, field indices, filter constants. Looked up in
-this order: `$VANE_CORE_CONFIG`, `config.env` in the working directory,
+this order: `$VELETA_CORE_CONFIG`, `config.env` in the working directory,
 then the one shipped here.
 
 Two rules that have not changed and should not:
@@ -57,7 +57,7 @@ python3 -m pip install pyserial     # only for --source serial
 ```
 core/
 ├── config.env
-├── vane_core/
+├── veleta_core/
 │   ├── __main__.py      the loop: drain, fuse, broadcast, answer
 │   ├── engine.py        devices, calibration, orchestration
 │   ├── frames.py        sensor CSV -> Reading. Never patch it for a layout

@@ -83,7 +83,7 @@ def check():
         problems.append("blender_manifest.toml must sit at the zip root")
     for arc in names:
         # Nothing from the proprietary side may have wandered in.
-        if arc.split(os.sep)[0] in ("core", "firmware", "vane_core"):
+        if arc.split(os.sep)[0] in ("core", "firmware", "veleta_core"):
             problems.append(f"{arc} does not belong in the extension package")
     return problems
 
@@ -91,7 +91,7 @@ def check():
 def build(out_dir):
     version = repo_version()
     os.makedirs(out_dir, exist_ok=True)
-    target = os.path.join(out_dir, f"vane-{version}.zip")
+    target = os.path.join(out_dir, f"veleta-{version}.zip")
     entries = collect()
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
         for full, arc in entries:

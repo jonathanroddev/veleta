@@ -11,7 +11,7 @@ import math
 import unittest
 
 import context
-from vane_core.fusion import DeviceFusion
+from veleta_core.fusion import DeviceFusion
 
 
 def gravity_for(roll_deg, pitch_deg):

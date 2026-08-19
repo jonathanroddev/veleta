@@ -7,8 +7,8 @@ parser. The point of the IDX_* keys is that none of them needs to.
 import unittest
 
 import context
-from vane_core.config import DEFAULTS
-from vane_core.frames import Layout, last_line_of, parse_line
+from veleta_core.config import DEFAULTS
+from veleta_core.frames import Layout, last_line_of, parse_line
 
 FUSED = "WT53abc,0.01,0.02,0.98,1.0,2.0,3.0,10.5,-20.25,30.0,0.1,0.2,0.3"
 RAW6 = "ESP32_A,0.01,0.02,0.98,1.0,2.0,3.0"

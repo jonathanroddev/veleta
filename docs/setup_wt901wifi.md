@@ -138,8 +138,8 @@ If the order/count does **not** match the assumptions, adjust in
 ## 5. One sensor in Blender
 
 1. Start the core and leave it running:
-   `cd core && python3 -m vane_core`
-2. In Blender, open the **Vane** tab in the 3D viewport sidebar (`N`) and
+   `cd core && python3 -m veleta_core`
+2. In Blender, open the **Veleta** tab in the 3D viewport sidebar (`N`) and
    press **Connect**. The panel reports the core's version and lists the
    sensors it can see.
 3. In the extension's preferences, set **Sensor → object** to your scene

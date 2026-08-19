@@ -1,4 +1,4 @@
-"""vane core — sensors in, oriented poses out.
+"""veleta core — sensors in, oriented poses out.
 
 An ordinary program: it does not import `bpy` and it runs, and is useful,
 with no Blender anywhere on the machine. That independence is not an
