@@ -68,6 +68,11 @@ boundary**, not a preference:
 - **No sensor has ever been connected.** Firmware written, unflashed; the
   AVR sketch compiles (`arduino:avr:nano`, 38% flash / 35% RAM), the ESP32
   one is compile-untested.
+- **The Windows core package has never run on Windows.**
+  `scripts/build_windows_bundle.py` produces it from this machine and the
+  layout is smoke-tested here with the host interpreter, but the bundled
+  `python.exe` has never been executed. It is unsigned on purpose — a test
+  build, not a customer one. See `docs/packaging.md`.
 - The recording in `samples/` is **synthetic**, from `fake_sensor.py`.
 
 ## Known uncertainties (resolve with hardware in hand)

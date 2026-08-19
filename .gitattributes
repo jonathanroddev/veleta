@@ -3,3 +3,7 @@
 
 # Recordings are line-oriented JSON: keep them diffable and normalised.
 *.jsonl text eol=lf
+
+# Windows batch files must reach Windows with CRLF. The build script also
+# converts them when packing, so this only matters for a checkout on Windows.
+*.bat text eol=crlf

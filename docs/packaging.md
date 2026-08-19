@@ -5,7 +5,7 @@ Two distributable artifacts, and neither is built by hand.
 | Artifact | Built by | Goes to |
 |---|---|---|
 | Extension package (`veleta-<version>.zip`) | `scripts/build_extension.py` | The Blender extensions platform, and the kit as an offline copy |
-| Core installer, one per OS | Not built yet — see below | The download page, and the kit |
+| Core package, one per OS (`veleta-core-<version>-win64.zip`) | `scripts/build_windows_bundle.py` — Windows only so far | The download page, and the kit |
 
 ## Versioning
 
@@ -57,10 +57,60 @@ blender --command extension validate dist/veleta-<version>.zip
 > Never run: there is no Blender on the development machine. This is the
 > first thing to do on a machine that has one.
 
-## The core installer
+## The core package
 
-Not built yet. One per operating system, shipped with the kit and served
-from the download page.
+One per operating system, shipped with the kit and served from the download
+page. **Windows exists; macOS and Linux do not yet.**
+
+```bash
+python3 scripts/build_windows_bundle.py            # dist/veleta-core-<v>-win64.zip
+python3 scripts/build_windows_bundle.py --check    # checks only, builds nothing
+```
+
+### What is in it, and why it is not a frozen .exe
+
+The core plus its own private copy of CPython — the official embeddable
+build, pinned by version **and by sha256**. The user unzips it and
+double-clicks a `.bat`; nothing is installed, nothing is written outside the
+folder, `PATH` is neither read nor changed, and deleting the folder removes
+it.
+
+The core is standard library only, so the embeddable runtime runs it as it
+is. That buys three things a PyInstaller-style executable does not:
+
+- **It can be assembled on any operating system.** Producing the Windows
+  package does not need a Windows machine, which matters when there isn't
+  one. The build is reproducible on the same terms as the extension: sorted
+  entries, fixed timestamps, byte-identical zip, sha256 printed.
+- **There is no frozen binary for antivirus heuristics to quarantine.**
+  Unsigned single-file executables get flagged routinely, and that is a
+  worse first impression than a folder of plain files.
+- **What ships is visibly the code in this repository**, not a black box.
+
+The cost is that the core ships as readable `.py` files. For a test build
+that is fine. If a release is meant to be opaque, decide that deliberately —
+it is not a reason to change this now.
+
+`packaging/windows/` holds the two `.bat` files and the README that go in.
+They are LF in the repository and converted to CRLF when packed.
+
+The second `.bat` replays the bundled sample on a loop, so the whole chain —
+core, protocol, extension, scene — can be checked on a machine that has no
+sensor anywhere near it.
+
+**pyserial is not bundled**, so `SOURCE=serial` fails inside this package.
+The wired bench is a development path, not a customer one; the WiFi kit does
+not need it.
+
+### The firewall, which is not a footnote
+
+On first run Windows asks whether to allow the core on the network. Blocked,
+sensor frames never arrive and **the only symptom is that nothing moves** —
+no error, anywhere. It is the most common thing to go wrong on a fresh
+Windows machine, so it is called out in the package README rather than left
+to a support conversation.
+
+Only the sensor port is exposed; the consumer port stays on `127.0.0.1`.
 
 ### Signing
 
@@ -77,6 +127,9 @@ written down long before it is due.
 Both certificates are paid and annual. This does not have to be solved
 before the repository exists, but it does have to be solved **before the
 first pre-sale**.
+
+Until then the Windows package is an **unsigned test build**: fine for a
+machine you control, not for a customer. It says so in its own README.
 
 The name on the certificate is what the customer reads while installing, so
 it should match the structure that sells the kit, not a personal name.
