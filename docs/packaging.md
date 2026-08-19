@@ -98,9 +98,23 @@ The second `.bat` replays the bundled sample on a loop, so the whole chain —
 core, protocol, extension, scene — can be checked on a machine that has no
 sensor anywhere near it.
 
-**pyserial is not bundled**, so `SOURCE=serial` fails inside this package.
-The wired bench is a development path, not a customer one; the WiFi kit does
-not need it.
+**pyserial is bundled**, pinned by hash like the interpreter. It is pure
+Python — no compiled extension anywhere in it — so it unpacks straight into
+the package and the build still needs no Windows machine.
+
+It ships even though the WiFi kit does not need it, because `SOURCE=serial`
+is not only the USB bench: **a classic Bluetooth module is a serial link
+over the air**, and pairing one creates a virtual COM port that the existing
+`SerialSource` reads without a line of new code. Leaving pyserial out made
+that path silently impossible in a package that otherwise looked complete.
+
+`list-ports.bat` runs `serial.tools.list_ports`, which is how the COM number
+of a paired module is found — Windows assigns it, and pairing often creates
+two ports where only the outgoing one works.
+
+**Bluetooth Low Energy is a different matter.** A BLE module is not a serial
+port on any platform we care about; supporting one means a new source in
+`core/veleta_core/sources/`, not a config change.
 
 ### The firewall, which is not a footnote
 

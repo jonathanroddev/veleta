@@ -13,10 +13,13 @@ WHAT THIS IS
     PATH is neither used nor changed. Delete the folder and it is gone.
 
 RUNNING IT
-    veleta-core.bat         Listen for sensors over WiFi (UDP 1399).
+    veleta-core.bat         Start the core, using whatever config.env says.
     veleta-core-demo.bat    Replay the bundled recording instead, on a loop.
                             No sensor and no network needed - use this to
                             check the whole chain end to end.
+    list-ports.bat          List the serial ports Windows can see. This is
+                            how you find which COM a paired Bluetooth module
+                            was given.
 
     Both open a console window and keep running until you close it or press
     Ctrl-C. Command line options are passed straight through, e.g.
@@ -39,10 +42,34 @@ WITH BLENDER
     The extension and the core must report the SAME version number. They
     ship together; if they disagree, the panel says so.
 
+A SENSOR ON A SERIAL PORT (USB, OR A BLUETOOTH MODULE)
+    A classic Bluetooth module is a serial link over the air: pair it in
+    Windows settings and it appears as a virtual COM port, exactly like a
+    USB cable. Both are the same path as far as the core is concerned.
+
+    1. Pair the module (Windows Settings > Bluetooth & devices).
+    2. Run list-ports.bat and note the COM number. Windows assigns it, so
+       do not guess it - and pairing can create TWO ports, one outgoing and
+       one incoming. The outgoing one is the one to use.
+    3. Edit config.env:
+           SOURCE=serial
+           SERIAL_PORT=COM5          <- whatever list-ports.bat showed
+           BAUD_RATE=115200          <- must match the sketch
+    4. Double-click veleta-core.bat.
+
+    Or, without editing anything:
+        veleta-core.bat --source serial --serial-port COM5
+
+    A serial link carries exactly one sensor, so its frames have no device
+    id. The core names it from SERIAL_DEVICE_ID in config.env, and that is
+    the name to map to an object in the extension.
+
 CONFIGURATION
     config.env, beside this file. Plain KEY=value, no quotes. The values
     worth knowing:
-        LISTEN_PORT     the port the sensors send to (must match the sensor)
+        SOURCE          udp (WiFi) | serial (USB or Bluetooth) | file
+        LISTEN_PORT     the port WiFi sensors send to (must match the sensor)
+        SERIAL_PORT     the COM port, when SOURCE=serial
         IDX_*           where each field sits in the sensor's CSV line
         AUTO_CALIBRATE  capture a reference pose a few seconds after start
 
@@ -51,13 +78,15 @@ CONFIGURATION
 
 WHAT IS NOT IN THIS BUILD
     - No code signature. See above.
-    - No serial support. The wired bench needs pyserial, which is not
-      bundled; SOURCE=serial will fail here. The WiFi kit does not need it.
+    - No Bluetooth Low Energy. A BLE module (HM-10 and similar) is not a
+      serial port and will not appear in list-ports.bat. Classic Bluetooth
+      modules (HC-05, HC-06) are, and work.
     - 64-bit Intel/AMD only. Not ARM.
 
 LICENCES
     LICENSE                    the core, proprietary.
     runtime\LICENSE.txt        Python, redistributed under the PSF licence.
+    PYSERIAL-LICENSE.txt       pyserial, redistributed under its BSD licence.
 
     The Blender extension is a separate program under GPL v3 or later and is
     not in this package. It talks to this core over a documented network

@@ -60,6 +60,23 @@ PY_URL = f"https://www.python.org/ftp/python/{PY_VERSION}/{PY_ZIP}"
 PY_SHA256 = "1ec066fb61ba5e8c73e29e048cd07c26850f74585e3a116005135b31b8004890"
 PY_TAG = "python" + "".join(PY_VERSION.split(".")[:2])   # -> python313
 
+# pyserial, the core's one non-stdlib dependency. It is pure Python — no
+# compiled extension anywhere in it — so the wheel unpacks straight into the
+# package and a Windows build still needs no Windows machine. Pinned by hash
+# for the same reason the interpreter is.
+#
+# It ships even though the WiFi kit does not need it: `SOURCE=serial` covers
+# the USB bench and any classic Bluetooth module, which pairs as a virtual
+# COM port. Leaving it out makes those paths silently impossible in a package
+# that otherwise looks complete.
+SERIAL_VERSION = "3.5"
+SERIAL_WHEEL = f"pyserial-{SERIAL_VERSION}-py2.py3-none-any.whl"
+SERIAL_URL = ("https://files.pythonhosted.org/packages/07/bc/"
+              "587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/"
+              + SERIAL_WHEEL)
+SERIAL_SHA256 = ("c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f"
+                 "2cf0")
+
 # The embeddable build's ._pth is what its interpreter uses instead of the
 # usual sys.path machinery. The stock one exposes only the runtime folder,
 # so `..` is added: that is the bundle root, where veleta_core sits.
@@ -90,23 +107,26 @@ def package_version():
     return None
 
 
-def runtime_zip(cache_dir, download=True):
-    """Path to the verified embeddable runtime, fetching it if needed."""
+def fetch(cache_dir, name, url, expected_sha256, download=True):
+    """Path to a verified third-party artifact, fetching it if needed.
+
+    A mismatched hash is fatal, never a warning: a package that silently
+    changes what it ships is not one anybody can support.
+    """
     os.makedirs(cache_dir, exist_ok=True)
-    path = os.path.join(cache_dir, PY_ZIP)
+    path = os.path.join(cache_dir, name)
     if not os.path.isfile(path):
         if not download:
             raise FileNotFoundError(f"{path} is missing and --no-download is set")
-        print(f"fetching {PY_URL}")
-        with urllib.request.urlopen(PY_URL) as response, \
-                open(path, "wb") as out:
+        print(f"fetching {url}")
+        with urllib.request.urlopen(url) as response, open(path, "wb") as out:
             out.write(response.read())
     with open(path, "rb") as f:
         digest = hashlib.sha256(f.read()).hexdigest()
-    if digest != PY_SHA256:
+    if digest != expected_sha256:
         raise ValueError(
-            f"{PY_ZIP} hashes {digest}, expected {PY_SHA256}. Refusing to "
-            f"ship an interpreter that is not the pinned one.")
+            f"{name} hashes {digest}, expected {expected_sha256}. Refusing "
+            f"to ship something other than the pinned artifact.")
     return path
 
 
@@ -125,7 +145,8 @@ def collect_core():
     out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
     out.append((os.path.join(ROOT, "LICENSE"), "LICENSE"))
     out.append((os.path.join(ROOT, SAMPLE), "samples/wt901_desk_wobble.jsonl"))
-    for name in ("veleta-core.bat", "veleta-core-demo.bat", "README.txt"):
+    for name in ("veleta-core.bat", "veleta-core-demo.bat", "list-ports.bat",
+                 "README.txt", "PYSERIAL-LICENSE.txt"):
         out.append((os.path.join(PACKAGING, name), name))
     return sorted(out, key=lambda pair: pair[1])
 
@@ -162,7 +183,8 @@ def _payload(full, arc, version):
 
 def build(out_dir, cache_dir, download=True):
     version = repo_version()
-    runtime = runtime_zip(cache_dir, download=download)
+    runtime = fetch(cache_dir, PY_ZIP, PY_URL, PY_SHA256, download)
+    wheel = fetch(cache_dir, SERIAL_WHEEL, SERIAL_URL, SERIAL_SHA256, download)
     os.makedirs(out_dir, exist_ok=True)
     target = os.path.join(out_dir, f"veleta-core-{version}-win64.zip")
     top = f"veleta-core-{version}-win64"
@@ -179,6 +201,15 @@ def build(out_dir, cache_dir, download=True):
 
         for full, arc in collect_core():
             add(arc, _payload(full, arc, version))
+
+        # pyserial unpacks beside veleta_core, where the rewritten ._pth
+        # already looks. Only the package itself: the .dist-info metadata is
+        # for installers, and nothing here installs anything.
+        with zipfile.ZipFile(wheel) as src:
+            for name in sorted(src.namelist()):
+                if not name.startswith("serial/") or name.endswith("/"):
+                    continue
+                add(name, src.read(name))
 
         with zipfile.ZipFile(runtime) as src:
             for name in sorted(src.namelist()):
@@ -220,11 +251,15 @@ def main(argv=None):
 
     target, listed, digest = build(args.out, args.cache,
                                    download=not args.no_download)
-    core = [a for a in listed if not a.startswith("runtime/")]
+    core = [a for a in listed
+            if not a.startswith(("runtime/", "serial/"))]
     print(f"{target}")
     for arc in core:
         print(f"  {arc}")
-    print(f"  runtime/  ({len(listed) - len(core)} files, "
+    n_serial = len([a for a in listed if a.startswith("serial/")])
+    n_runtime = len(listed) - len(core) - n_serial
+    print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
+    print(f"  runtime/  ({n_runtime} files, "
           f"CPython {PY_VERSION} embeddable)")
     print(f"sha256  {digest}")
     print("\nUNSIGNED: Windows will warn about an unidentified publisher.")
