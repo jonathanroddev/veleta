@@ -19,9 +19,14 @@ DEFAULTS = {
     "SOURCE": "udp",                 # udp | serial | file
     "LISTEN_HOST": "0.0.0.0",
     "LISTEN_PORT": "1399",
-    "SERIAL_PORT": "/dev/cu.wchusbserial-CHANGE_ME",
+    "SERIAL_PORT": "/dev/cu.usbserial-CHANGE_ME",
     "BAUD_RATE": "115200",
     "SERIAL_DEVICE_ID": "wired",     # the cable carries no DeviceID; this is it
+    "BLE_NAME": "",                  # peripheral to connect to; "" = first HM-10
+    "BLE_ADDRESS": "",               # wins over BLE_NAME when set
+    "BLE_CHAR": "0000ffe1-0000-1000-8000-00805f9b34fb",
+    "BLE_DEVICE_ID": "",             # "" = use the peripheral's BLE name
+    "BLE_TIMEOUT": "20",             # seconds to scan and connect
 
     # --- Output (core -> consumers) ---
     "CONTROL_HOST": "127.0.0.1",

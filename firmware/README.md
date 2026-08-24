@@ -16,13 +16,16 @@ distributed with the Blender extension.
 
 ```
 firmware/
+├── ble/
+│   ├── mpu_ble_hm10/           ATmega328P + HM-10 + MPU-6500, 40 Hz
+│   └── hm10_config/            find the module's pins and set its baud/name
 ├── wifi/
 │   ├── mpu_wifi_esp32/         ESP32 + MPU-6050, native WiFi, 100-200 Hz
 │   └── mpu_wifi_avr_esp01/     ATmega328P + ESP-01 + MPU-6050, ~20 Hz
 └── wired/
-    ├── mpu_serial_bridge/      Nano + MPU-6050 over USB serial, ~50 Hz
+    ├── mpu_serial_bridge/      Nano + MPU-6500 over USB serial, 39 Hz
     ├── i2c_diag/               I2C scan: is the sensor even there?
-    └── backups/                flash/EEPROM dumps of the OLD Uno (gitignored)
+    └── backups/                flash/EEPROM dumps (gitignored)
 ```
 
 `mpu_wifi_avr_esp01/` is named after the **architecture, not the board**.
@@ -35,11 +38,27 @@ Network credentials live in `secrets.h`, one per board, **gitignored**.
 Copy `secrets.example.h` to start. Never commit an SSID, a password or a
 LAN IP.
 
+BLE needs none: there is no network to join. The module's identity is its
+advertised BLE name, set with `AT+NAME`, and the core uses it as the
+device id — so a BLE board has nothing secret to keep out of the repo.
+
+## The BLE path is the product path
+
+`ble/` is where the kit is going: the final assembly runs on a battery, so
+there is no cable to carry data and no mains to feed a WiFi radio. It
+measures **39.7 Hz delivered with 0.3% loss**, which beats the wired bench
+and matches what the ESP32 would give on a fraction of the power.
+
+It has one hard rule, spelled out in the sketch: **never out-run the
+link**. Over-running does not drop whole frames — the HM-10 drops bytes
+mid-line, and the debris still parses as six numeric fields.
+
 ## State
 
-Written, and — apart from the AVR sketch compiling — **never flashed**.
-See [`docs/hardware.md`](../docs/hardware.md) for exactly what has and has
-not been done, and the setup guides for bring-up.
+`ble/mpu_ble_hm10` and `wired/` are **flashed and validated on real
+hardware**. The WiFi sketches are written and **never flashed**. See
+[`docs/hardware.md`](../docs/hardware.md) for exactly what has and has not
+been done, and the setup guides for bring-up.
 
 ## Version
 

@@ -8,12 +8,26 @@ There are two pieces to install, in this order.
 
 ## 1. The core
 
-The core is the program that talks to the sensors. It comes with the kit,
-as an installer for your operating system.
+The core is the program that talks to the sensors. It comes with the kit.
 
-1. Open the installer and follow it.
-2. Launch **veleta core**. It reports the port it is listening on and waits.
-3. Leave it running. Blender talks to it while you work.
+**Windows.** Unzip `veleta-core-<version>-win64.zip` anywhere you like. It
+installs nothing and changes nothing on your machine: the copy of Python it
+needs travels inside the folder. Then start the file that matches your
+sensor.
+
+| Your sensor | Start |
+|---|---|
+| Bluetooth (the battery kit) | `veleta-core-ble.bat` |
+| WiFi | `veleta-core.bat` |
+| USB cable | `veleta-core.bat --config config.wired.env` |
+| None yet | `veleta-core-demo.bat` |
+
+Starting the wrong one is not obvious from the screen. `veleta-core.bat`
+with a Bluetooth sensor sits waiting for WiFi data that will never arrive,
+and it waits quietly.
+
+Whichever you start, it reports what it is listening on and waits. Leave it
+running: Blender talks to it while you work.
 
 The core does not need an internet connection and does not send anything
 anywhere: by default it listens on your own machine only.
@@ -24,35 +38,77 @@ See [`packaging.md`](packaging.md#signing) for where that stands.
 
 ## 2. The extension
 
-From inside Blender, which is the easy path and keeps it updated:
-
-1. **Edit → Preferences → Get Extensions**.
-2. Search for **Veleta**.
-3. **Install**, then tick it to enable it.
-
-Without an internet connection, the kit also carries the extension as a
-zip:
+The kit carries it as a zip, `veleta-<version>.zip`. Note it is the small
+one, around 30 KB — not the core package, which is far bigger.
 
 1. **Edit → Preferences → Add-ons → ▾ → Install from Disk…**
 2. Pick `veleta-<version>.zip` from the kit.
+3. Tick it to enable it, if it is not already.
 
-Blender 4.2 or newer is required.
+The same **Install from Disk…** sits under **Get Extensions → ▾**; either
+menu does the same thing. Dragging the zip onto the Blender window works
+too.
 
-## 3. First run
+**Blender 4.2 or newer is required.**
 
-1. Put the sensor **flat and still** on the desk. The core spends its first
+## 3. What to configure
+
+Very little — and on a one-sensor kit, quite possibly nothing.
+
+### The core: nothing
+
+The configuration file beside it already matches the sensor in the box.
+
+The one setting worth knowing exists is `BLE_NAME` in `config.ble.env`.
+Shipped empty, which means "connect to the first veleta sensor you find" —
+right for one sensor, ambiguous for several. When you own more than one,
+put the name of the one you want there.
+
+### The extension: one setting
+
+Its defaults already point at the core: **Core host** `127.0.0.1` and
+**Core port** `1400` are exactly where the core listens.
+
+That leaves one that matters:
+
+**Sensor → object** — which object each sensor drives. It ships as
+`*:Cube`, where `*` means "any sensor" and `Cube` is the cube a brand new
+Blender scene starts with. On a default scene it therefore works untouched.
+Change `Cube` to your object's exact name from the outliner if you deleted
+that cube or want to drive something else.
+
+> If the name matches no object, the sensor falls through to **Default
+> object** (`_UNASSIGNED`), which does not exist either. Then nothing moves
+> and nothing complains. It is the most common first-run disappointment and
+> it is not a fault — check the name against the outliner, spelling and
+> capitals included.
+
+**Axis map** and the three **Sign** values start at identity on purpose:
+the right values depend on how you physically mounted the sensor, so there
+is no default that could be right. Expect to set them once, after mounting
+it — see [When the object moves wrongly](#when-the-object-moves-wrongly).
+
+## 4. First run
+
+1. Power the sensor. On the Bluetooth kit the USB lead is **power only** —
+   there is no driver to install and nothing to pair. A veleta sensor never
+   appears in your system's Bluetooth settings, and that is normal: it is
+   not that kind of Bluetooth device. The core finds it on its own.
+   Windows and macOS both ask permission to use Bluetooth the first time.
+2. Put the sensor **flat and still** on the desk. The core spends its first
    couple of seconds estimating the gyro's resting bias, and a sensor that
-   moves during it will drift afterwards.
-2. In Blender, open the **Veleta** tab in the 3D viewport sidebar
+   moves during it will drift afterwards. You have about three seconds from
+   the moment it starts.
+3. In Blender, open the **Veleta** tab in the 3D viewport sidebar
    (press `N` if the sidebar is hidden).
-3. Press **Connect**. The panel reports the core's version and the sensors
+4. Press **Connect**. The panel reports the core's version and the sensors
    it can see.
-4. In the extension's preferences, put the name of the object you want to
-   drive in **Sensor → object** (`*:Cube` means "any sensor moves the
-   object called Cube").
-5. Hold the sensor in the pose you want to count as zero and press
+5. Check **Sensor → object** in the extension's preferences names an
+   object that exists — see [What to configure](#3-what-to-configure). On a
+   default scene the shipped `*:Cube` already does.
+6. Hold the sensor in the pose you want to count as zero and press
    **Calibrate**.
-6. Move the sensor. The object follows.
+7. Move the sensor. The object follows.
 
 ## When the object moves wrongly
 
@@ -73,13 +129,23 @@ In order, because the first two are almost always it:
 
 1. **Is the core running?** The panel says "No core at 127.0.0.1:1400"
    when it is not.
-2. **Is the sensor powered and on the same network?** For a WiFi sensor,
-   its destination address has to be this machine and its port has to match
-   the core's `LISTEN_PORT` (1399 by default).
-3. **Does the panel list the sensor but nothing moves?** Then the sensor is
+2. **Did you start the right one?** A Bluetooth sensor needs
+   `veleta-core-ble.bat`. `veleta-core.bat` listens for WiFi sensors and
+   will wait for them all day without saying so.
+3. **Is the sensor powered, and is the core finding it?**
+   - *Bluetooth:* the core says which sensor it connected to as it starts.
+     "no BLE peripheral advertising..." means it is unpowered, out of
+     range, or something else is already connected to it — only one program
+     can hold a sensor at a time, so close any other copy of the core.
+     If your system insists Bluetooth is off while the adapter is plainly
+     on, it is the permission that was refused, not the adapter: allow
+     Bluetooth for the core in your system's privacy settings.
+   - *WiFi:* its destination address has to be this machine and its port
+     has to match the core's `LISTEN_PORT` (1399 by default).
+4. **Does the panel list the sensor but nothing moves?** Then the sensor is
    arriving and the object name is wrong — check **Sensor → object** against
    the exact name in the outliner.
-4. **Does the panel warn about versions?** Firmware, core and extension
+5. **Does the panel warn about versions?** Firmware, core and extension
    ship together. Update whichever is behind; a mismatch is not cosmetic.
 
 ## Seeing it work without the sensor
@@ -103,6 +169,9 @@ and calibration, exactly as live hardware would:
 ```bash
 veleta-core --play samples/wt901_desk_wobble.jsonl --loop
 ```
+
+On Windows that is what `veleta-core-demo.bat` already does, so just start
+it instead.
 
 Connect from Blender as usual and the object moves. If it does, and a real
 sensor does not, the fault is the sensor, its power or the network — not

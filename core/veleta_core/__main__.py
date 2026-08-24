@@ -19,7 +19,8 @@ from .config import load as load_config
 from .engine import Engine
 from .recorder import Recorder
 from .server import Server
-from .sources import FileSource, UdpSource, open_serial_source
+from .sources import (FileSource, UdpSource, open_ble_source,
+                      open_serial_source)
 
 
 def _log(msg):
@@ -34,11 +35,13 @@ def build_parser():
                     "else that speaks the protocol.")
     p.add_argument("--config", metavar="PATH",
                    help="config.env to use (default: the usual search order)")
-    p.add_argument("--source", choices=("udp", "serial", "file"),
+    p.add_argument("--source", choices=("udp", "serial", "ble", "file"),
                    help="where the sensor frames come from")
     p.add_argument("--listen-port", type=int,
                    help="UDP port the sensors send to")
     p.add_argument("--serial-port", help="serial device of the wired bench")
+    p.add_argument("--ble-name", metavar="NAME",
+                   help="BLE peripheral to connect to (overrides BLE_NAME)")
     p.add_argument("--baud", type=int, help="serial baud rate")
     p.add_argument("--control-port", type=int,
                    help="UDP port consumers connect to")
@@ -83,6 +86,16 @@ def main(argv=None):
             # A cable carries exactly one sensor, so the wired frames have
             # no DeviceID and the transport is the identity.
             default_device = cfg["SERIAL_DEVICE_ID"]
+        elif source_kind == "ble":
+            source = open_ble_source(
+                name=args.ble_name or cfg["BLE_NAME"],
+                address=cfg["BLE_ADDRESS"],
+                char=cfg["BLE_CHAR"],
+                device_id=cfg["BLE_DEVICE_ID"],
+                timeout=float(cfg["BLE_TIMEOUT"]))
+            # One BLE connection carries one sensor, so the frames have no
+            # DeviceID either. The peripheral's BLE name is the identity.
+            default_device = source.device_id
         else:
             source = UdpSource(cfg["LISTEN_HOST"],
                                args.listen_port or int(cfg["LISTEN_PORT"]))

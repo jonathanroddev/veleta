@@ -42,7 +42,18 @@ WITH BLENDER
     The extension and the core must report the SAME version number. They
     ship together; if they disagree, the panel says so.
 
-A SENSOR ON A SERIAL PORT (USB, OR A BLUETOOTH MODULE)
+A BLE SENSOR (THE BATTERY KIT)
+    Run veleta-core-ble.bat. That is the whole procedure: it already
+    points at config.ble.env, which carries the 6-field layout BLE needs.
+
+    Running veleta-core.bat instead is the easy mistake - that one listens
+    for WiFi sensors over UDP and will wait forever.
+
+    With one module it connects to the first peripheral advertising the
+    HM-10 service. With several, set BLE_NAME in config.ble.env to the
+    name you gave the module with AT+NAME.
+
+A SENSOR ON A SERIAL PORT (USB, OR A CLASSIC BLUETOOTH MODULE)
     A classic Bluetooth module is a serial link over the air: pair it in
     Windows settings and it appears as a virtual COM port, exactly like a
     USB cable. Both are the same path as far as the core is concerned.
@@ -55,6 +66,14 @@ A SENSOR ON A SERIAL PORT (USB, OR A BLUETOOTH MODULE)
            SOURCE=serial
            SERIAL_PORT=COM5          <- whatever list-ports.bat showed
            BAUD_RATE=115200          <- must match the sketch
+
+       A serial sensor that sends 6 fields with no device id (the Arduino
+       bench sketch does) needs the other configuration file, because its
+       field positions all shift down by one:
+
+           veleta-core.bat --config config.wired.env
+
+       Symptom of using the wrong one: every frame reported UNPARSED.
     4. Double-click veleta-core.bat.
 
     Or, without editing anything:
@@ -78,15 +97,22 @@ CONFIGURATION
 
 WHAT IS NOT IN THIS BUILD
     - No code signature. See above.
-    - No Bluetooth Low Energy. A BLE module (HM-10 and similar) is not a
-      serial port and will not appear in list-ports.bat. Classic Bluetooth
-      modules (HC-05, HC-06) are, and work.
+    - Nothing is missing for BLE: bleak and the WinRT bindings ship
+      inside this package. But this half has never run on Windows. It is
+      developed against macOS CoreBluetooth, and WinRT is a different
+      implementation, so treat the first run as a test.
+
+      A BLE module never appears in list-ports.bat and cannot be paired
+      in Windows settings: it is not a serial port and never becomes one.
+      That is normal. Classic Bluetooth modules (HC-05, HC-06) DO pair as
+      a COM port, and work through --source serial.
     - 64-bit Intel/AMD only. Not ARM.
 
 LICENCES
     LICENSE                    the core, proprietary.
     runtime\LICENSE.txt        Python, redistributed under the PSF licence.
     PYSERIAL-LICENSE.txt       pyserial, redistributed under its BSD licence.
+    BLEAK-LICENSE.txt          bleak and the winrt-* bindings, MIT.
 
     The Blender extension is a separate program under GPL v3 or later and is
     not in this package. It talks to this core over a documented network

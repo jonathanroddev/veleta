@@ -42,13 +42,19 @@ unit    string    g   g   g    °/s °/s °/s   deg    deg    deg    (raw)
 `IDX_*` config keys address both, and adding a profile later (a native
 quaternion appended at 13..16, say) does not break existing sensors.
 
-### The wired bench is the exception
+### Point-to-point transports are the exception
 
-The wired path streams **6 fields with no deviceId** (`ax,ay,az,gx,gy,gz`)
-over USB serial. That is fine and stays as it is: a cable carries exactly
-one sensor, so there is nothing to disambiguate. Do not add a deviceId
-there — the transport already identifies the device. The core names it
-from `SERIAL_DEVICE_ID` in its `config.env`.
+The wired path and the BLE path both stream **6 fields with no deviceId**
+(`ax,ay,az,gx,gy,gz`). That is fine and stays as it is: a cable carries
+exactly one sensor, and so does one BLE connection, so there is nothing to
+disambiguate. Do not add a deviceId there — the transport already
+identifies the device.
+
+The core names the sensor from `SERIAL_DEVICE_ID` on the wire, and on BLE
+from the **peripheral's advertised name** (set with `AT+NAME`), which
+makes the identity a property of the module rather than of the PC's
+config. On a link that carries ~1990 B/s, spending ~7 bytes per frame on a
+constant string would cost real frames per second.
 
 ### deviceId
 
@@ -79,10 +85,17 @@ from `SERIAL_DEVICE_ID` in its `config.env`.
 | `mpu_wifi_avr_esp01` | ~20 Hz | SoftwareSerial + AT commands is the bottleneck |
 | `mpu_wifi_esp32` | 100–200 Hz | Native WiFi, no intermediary |
 | WT901WIFI | up to 200 Hz | Configured from WitMotion's tool |
-| wired (serial) | ~50 Hz | `delay(20)` in the sketch, 115200 baud |
+| wired (serial) | **39 Hz (measured)** | `delay(20)` plus ~5.5 ms of I2C read and printing |
+| BLE (HM-10 @38400) | **40 Hz (measured)** | ~1990 B/s link; rate is `1990 / frame_bytes` |
 
 The core drains up to 200 datagrams per loop, so several sensors at 100 Hz
 are fine.
+
+The wired and BLE figures are measured, not estimated. Wired: 25.5 ms
+median period (p5 24.7, p95 26.3) over 20 s on the bench Nano. BLE, paced
+at 40 Hz: 39.7 Hz delivered, 0.3% loss, 1194/1196 frames well formed. The `delay(20)` is only part of it —
+the I2C burst and the `Serial.print` of the line cost the rest. The others
+remain estimates until the same measurement is made on them.
 
 ### Adding a new sensor type
 
@@ -208,3 +221,23 @@ audience. See `blender/playback.py`.
 python3 -m veleta_core --record ../samples/new.jsonl     # capture
 python3 -m veleta_core --play ../samples/new.jsonl --loop # replay
 ```
+
+
+### BLE: never out-run the link
+
+The BLE link is a fixed pipe of about **1990 B/s** (HM-10 at 38400), so
+the frame rate is simply `1990 / frame_bytes` — 45 Hz for a 45-byte raw6
+frame, and no configuration will beat that.
+
+Exceeding it is not a graceful degradation. The HM-10 **drops bytes
+mid-line**, not whole frames, and the debris still satisfies this
+document: a truncated `-0.3044` arrives as `44`, the line still carries
+six numeric fields, and the core parses 44 g as a real acceleration.
+Free-running at 66 Hz delivered 45.2 Hz but only **388 of 1364 frames well
+formed**.
+
+The emitter must therefore be paced below the ceiling — that is what
+`TX_PERIOD_MS` in `mpu_ble_hm10.ino` is, and why it is documented as a
+safety limit rather than a tuning knob. The consumer's defence is smaller:
+the core discards everything before the first newline after connecting,
+because that fragment is a truncated frame by definition.

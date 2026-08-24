@@ -29,6 +29,31 @@ and versions follow [semantic versioning](https://semver.org/).
   shipped recordings and the bundled demo.
 - `scripts/build_extension.py` — reproducible extension package.
 
+### Added
+- **BLE transport** (`--source ble`), now the product path: the final
+  assembly runs on a battery, so USB is power only. `firmware/ble/` holds
+  the sensor sketch and a bring-up tool that finds the module's pins and
+  sets its baud and name; `core/veleta_core/sources/ble.py` is the client,
+  with `bleak` imported lazily like `pyserial`. Validated on hardware:
+  39.7 Hz delivered, 0.3% loss, poses agreeing with the cable to 0.3 deg.
+- `core/config.ble.env` and `docs/setup_ble_hm10.md`.
+- The BLE device id is the peripheral's advertised name (`AT+NAME`), so
+  identity is a property of the module and costs nothing on the wire.
+
+### Fixed
+- The bench sensor is an **MPU-6500**, not an MPU-6050: `WHO_AM_I` (0x75)
+  reads 0x70. The sketch header claimed "confirmed by WHO_AM_I=0x68", which
+  confused the I2C address with the WHO_AM_I value. No code change was
+  needed — the two parts are register-compatible for everything the sketch
+  touches.
+- The wired rate is **39 Hz measured**, not the ~50 Hz `docs/protocol.md`
+  claimed: the `delay(20)` is only part of a 25.5 ms period.
+- `core/config.wired.env` — the wired bench could not be run from the
+  shipped configuration. `config.env` carries the WiFi layout (7 fields
+  with a DeviceID) while the wired path sends 6 fields without one, so
+  every frame was rejected as UNPARSED. This is a second configuration,
+  not a second parser.
+
 ### Changed
 - Split out of `sandbox/motion_bridge`, where the fusion lived inside the
   Blender scripts. The wired and WiFi paths are now two sources of one

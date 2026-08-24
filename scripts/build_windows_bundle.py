@@ -77,6 +77,52 @@ SERIAL_URL = ("https://files.pythonhosted.org/packages/07/bc/"
 SERIAL_SHA256 = ("c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f"
                  "2cf0")
 
+# --- BLE (`--source ble`), the battery path -------------------------------
+# Ten wheels, ~1.2 MiB, all pure-binary and already built for this exact
+# interpreter (cp313 / win_amd64). They can be FETCHED from macOS but never
+# EXERCISED there: the WinRT backend is a different implementation from the
+# CoreBluetooth one the BLE source is developed against, so the first real
+# test of this half happens on Windows. `winrt-runtime` carries its own
+# msvcp140.dll, so no Visual C++ redistributable is needed.
+#
+# Pinned by version AND hash for the same reason the interpreter is.
+BLE_WHEELS = (
+    ("bleak-3.0.2-py3-none-any.whl",
+     "https://files.pythonhosted.org/packages/26/54/05aceb9cd80073805b3ed8522e3196e8cb22f70e741873fa51406c31f4e7/bleak-3.0.2-py3-none-any.whl",
+     "39092feb9e83f1df5ad2f88e837723c7211c982ce9e9cda6235104bc2ebe0d0d"),
+    ("winrt_runtime-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/aa/24/2b6e536ca7745d788dfd17a2ec376fa03a8c7116dc638bb39b035635484f/winrt_runtime-3.2.1-cp313-cp313-win_amd64.whl",
+     "3c1fdcaeedeb2920dc3b9039db64089a6093cad2be56a3e64acc938849245a6d"),
+    ("winrt_windows_devices_bluetooth-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/05/6d/f60588846a065e69a2ec5e67c5f85eb45cb7edef2ee8974cd52fa8504de6/winrt_windows_devices_bluetooth-3.2.1-cp313-cp313-win_amd64.whl",
+     "6703dfbe444ee22426738830fb305c96a728ea9ccce905acfdf811d81045fdb3"),
+    ("winrt_windows_devices_bluetooth_advertisement-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/86/83/503cf815d84c5ba8c8bc61480f32e55579ebf76630163405f7df39aa297b/winrt_windows_devices_bluetooth_advertisement-3.2.1-cp313-cp313-win_amd64.whl",
+     "b66410c04b8dae634a7e4b615c3b7f8adda9c7d4d6902bcad5b253da1a684943"),
+    ("winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/5b/3b/eb9d99b82a36002d7885206d00ea34f4a23db69c16c94816434ded728fa3/winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp313-cp313-win_amd64.whl",
+     "8d8d89f01e9b6931fb48217847caac3227a0aeb38a5b7782af71c2e7b262ec30"),
+    ("winrt_windows_devices_enumeration-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/70/de/f30daaaa0e6f4edb6bd7ddb3e058bd453c9ad90c032a4545c4d4639338aa/winrt_windows_devices_enumeration-3.2.1-cp313-cp313-win_amd64.whl",
+     "6ca40d334734829e178ad46375275c4f7b5d6d2d4fc2e8879690452cbfb36015"),
+    ("winrt_windows_devices_radios-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/39/c1/24cec0cc228642554b48d436a7617d7162fb952919c55fc26e2d99c310bd/winrt_windows_devices_radios-3.2.1-cp313-cp313-win_amd64.whl",
+     "bf1a975f46a2aa271ffea1340be0c7e64985050d07433e701343dddc22a72290"),
+    ("winrt_windows_foundation-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/ba/7f/8d5108461351d4f6017f550af8874e90c14007f9122fa2eab9f9e0e9b4e1/winrt_windows_foundation-3.2.1-cp313-cp313-win_amd64.whl",
+     "6e98617c1e46665c7a56ce3f5d28e252798416d1ebfee3201267a644a4e3c479"),
+    ("winrt_windows_foundation_collections-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/94/93/4f75fd6a4c96f1e9bee198c5dc9a9b57e87a9c38117e1b5e423401886353/winrt_windows_foundation_collections-3.2.1-cp313-cp313-win_amd64.whl",
+     "5e12a6e75036ee90484c33e204b85fb6785fcc9e7c8066ad65097301f48cdd10"),
+    ("winrt_windows_storage_streams-3.2.1-cp313-cp313-win_amd64.whl",
+     "https://files.pythonhosted.org/packages/15/59/601724453b885265c7779d5f8025b043a68447cbc64ceb9149d674d5b724/winrt_windows_storage_streams-3.2.1-cp313-cp313-win_amd64.whl",
+     "202c5875606398b8bfaa2a290831458bb55f2196a39c1d4e5fa88a03d65ef915"),
+)
+
+# What of a wheel actually ships: the importable package, never the
+# .dist-info metadata, which is for installers and nothing here installs.
+BLE_PREFIXES = ("bleak/", "winrt/")
+
 # The embeddable build's ._pth is what its interpreter uses instead of the
 # usual sys.path machinery. The stock one exposes only the runtime folder,
 # so `..` is added: that is the bundle root, where veleta_core sits.
@@ -143,9 +189,17 @@ def collect_core():
             rel = os.path.relpath(full, source).replace(os.sep, "/")
             out.append((full, f"veleta_core/{rel}"))
     out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
+    # The wired/Bluetooth-serial layout is a different set of IDX_*, so it
+    # ships as its own file: without it a serial sensor is UNPARSED here too.
+    out.append((os.path.join(ROOT, "core", "config.wired.env"),
+                "config.wired.env"))
+    # The BLE path ships complete: see BLE_WHEELS.
+    out.append((os.path.join(ROOT, "core", "config.ble.env"),
+                "config.ble.env"))
     out.append((os.path.join(ROOT, "LICENSE"), "LICENSE"))
     out.append((os.path.join(ROOT, SAMPLE), "samples/wt901_desk_wobble.jsonl"))
-    for name in ("veleta-core.bat", "veleta-core-demo.bat", "list-ports.bat",
+    for name in ("veleta-core.bat", "veleta-core-demo.bat",
+                 "veleta-core-ble.bat", "list-ports.bat",
                  "README.txt", "PYSERIAL-LICENSE.txt"):
         out.append((os.path.join(PACKAGING, name), name))
     return sorted(out, key=lambda pair: pair[1])
@@ -185,6 +239,8 @@ def build(out_dir, cache_dir, download=True):
     version = repo_version()
     runtime = fetch(cache_dir, PY_ZIP, PY_URL, PY_SHA256, download)
     wheel = fetch(cache_dir, SERIAL_WHEEL, SERIAL_URL, SERIAL_SHA256, download)
+    ble_wheels = [fetch(cache_dir, name, url, sha, download)
+                  for name, url, sha in BLE_WHEELS]
     os.makedirs(out_dir, exist_ok=True)
     target = os.path.join(out_dir, f"veleta-core-{version}-win64.zip")
     top = f"veleta-core-{version}-win64"
@@ -210,6 +266,28 @@ def build(out_dir, cache_dir, download=True):
                 if not name.startswith("serial/") or name.endswith("/"):
                     continue
                 add(name, src.read(name))
+
+        # bleak and the WinRT bindings unpack the same way, beside
+        # veleta_core. The winrt-* wheels are one namespace package split
+        # across ten distributions: they all merge into a single winrt/
+        # tree, which is why they are unpacked rather than kept as wheels.
+        ble_licence = None
+        for path in ble_wheels:
+            with zipfile.ZipFile(path) as src:
+                for name in sorted(src.namelist()):
+                    if name.endswith("/"):
+                        continue
+                    if name.endswith("dist-info/licenses/LICENSE"):
+                        ble_licence = src.read(name)
+                    if not name.startswith(BLE_PREFIXES):
+                        continue
+                    add(name, src.read(name),
+                        executable=name.endswith((".dll", ".pyd")))
+        if ble_licence:
+            text = ble_licence.decode("utf-8").replace("\r\n", "\n")
+            text += ("\n\nThe winrt-* packages are MIT licensed too "
+                     "(License-Expression: MIT in each wheel's METADATA).\n")
+            add("BLEAK-LICENSE.txt", text.replace("\n", "\r\n").encode("utf-8"))
 
         with zipfile.ZipFile(runtime) as src:
             for name in sorted(src.namelist()):
@@ -252,13 +330,16 @@ def main(argv=None):
     target, listed, digest = build(args.out, args.cache,
                                    download=not args.no_download)
     core = [a for a in listed
-            if not a.startswith(("runtime/", "serial/"))]
+            if not a.startswith(("runtime/", "serial/") + BLE_PREFIXES)]
     print(f"{target}")
     for arc in core:
         print(f"  {arc}")
     n_serial = len([a for a in listed if a.startswith("serial/")])
-    n_runtime = len(listed) - len(core) - n_serial
+    n_ble = len([a for a in listed if a.startswith(BLE_PREFIXES)])
+    n_runtime = len(listed) - len(core) - n_serial - n_ble
     print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
+    print(f"  bleak/ winrt/  ({n_ble} files, bleak + WinRT bindings, "
+          f"NEVER RUN ON WINDOWS)")
     print(f"  runtime/  ({n_runtime} files, "
           f"CPython {PY_VERSION} embeddable)")
     print(f"sha256  {digest}")

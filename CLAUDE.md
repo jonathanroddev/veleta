@@ -28,7 +28,13 @@ boundary**, not a preference:
 ## Rules of the code
 
 - **A different CSV layout is a configuration change**, never a parser
-  change: that is what `IDX_*` in `core/config.env` is for.
+  change: that is what `IDX_*` in `core/config.env` is for. Three configs
+  ship: `config.env` (WiFi, 7 fields), `config.wired.env` and
+  `config.ble.env` (6 fields, no DeviceID).
+- **Never out-run a link.** On BLE, over-running does not drop whole
+  frames: the HM-10 drops bytes mid-line and the debris still parses as
+  six numeric fields. Emitters are paced below a *measured* ceiling, and
+  `TX_PERIOD_MS` is a safety limit, not a tuning knob.
 - **A wrong-looking axis is a configuration change**, never a code change:
   that is what the extension's `AXIS_MAP` and `SIGN_*` are for. Axis
   mapping lives on the **consumer** side — Blender is Z-up, Godot is Y-up.
@@ -39,9 +45,12 @@ boundary**, not a preference:
 - **Network credentials go in `firmware/*/secrets.h`** (gitignored, one per
   board). Never commit an SSID, a password or a LAN IP.
 - **Blender code must not block the interface:** `bpy.app.timers`.
-- **Standard library only.** `pyserial` is the single exception, in the
-  core, imported lazily so only the wired bench needs it. Justify anything
-  new.
+- **Standard library only**, with two justified exceptions, both in the
+  core and both imported lazily so only the transport that needs them
+  pays: `pyserial` for the wired bench, `bleak` for BLE. Justify anything
+  new. Note `bleak` is not pure Python like `pyserial` — it wraps a
+  compiled platform backend (pyobjc / WinRT / D-Bus), which is why the
+  Windows bundle does **not** ship it.
 - **Code, comments and user-facing messages in English.** Spanish is for
   the customer-facing site and its installation guide, not for the
   repository.
@@ -65,9 +74,19 @@ boundary**, not a preference:
   machine. `client.py` and `axes.py` are tested; `__init__.py`, the
   manifest and the panel are written but unexecuted. First job on a machine
   with Blender: `blender --command extension validate dist/veleta-<v>.zip`.
-- **No sensor has ever been connected.** Firmware written, unflashed; the
-  AVR sketch compiles (`arduino:avr:nano`, 38% flash / 35% RAM), the ESP32
-  one is compile-untested.
+- **The BLE path is the product path and is validated on real hardware**
+  (2026-08-24): ATmega328P + HM-10 + MPU-6500, 39.7 Hz delivered, 0.3%
+  loss, poses agreeing with the cable to 0.3 deg. The final assembly runs
+  on a battery, so USB is power only. Run it with
+  `python3 -m veleta_core --config config.ble.env`.
+- **The wired bench is validated on real hardware** (2026-08-24): a Nano
+  flashed with `mpu_serial_bridge`, an MPU-6500 at I2C 0x68, 39 Hz measured,
+  fused poses matching gravity to within 0.15 deg. Run it with
+  `python3 -m veleta_core --config config.wired.env` — the default
+  `config.env` carries the WiFi layout and rejects both 6-field paths.
+- **No WiFi sensor has ever been connected.** The WT901WIFI is owned but
+  unconnected; the AVR WiFi sketch compiles (`arduino:avr:nano`, 38% flash /
+  35% RAM), the ESP32 one is compile-untested.
 - **The Windows core package has never run on Windows.**
   `scripts/build_windows_bundle.py` produces it from this machine and the
   layout is smoke-tested here with the host interpreter, but the bundled
@@ -87,6 +106,8 @@ boundary**, not a preference:
    Do not copy old `AXIS_MAP` values expecting the same result.
 3. **The Nano + ESP-01 rate.** ~20 Hz is an estimate from the AT round trip
    at 9600 baud. Measure it with `read_udp.py` before designing around it.
+   For reference, the wired path measured 39 Hz where the docs had estimated
+   50 — estimates here have run optimistic.
 
 ## Testing without hardware
 

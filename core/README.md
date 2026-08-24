@@ -44,13 +44,25 @@ Two rules that have not changed and should not:
 
 ## Dependencies
 
-The standard library, and that is the whole list — unless you use the
-wired bench, where `pyserial` is needed. It is imported lazily, so a user
-of the WiFi kit never has to install it.
+The standard library, and that is the whole list for the WiFi kit. Two
+transports need more, and both are imported lazily, so you only install
+what you actually run:
 
 ```bash
 python3 -m pip install pyserial     # only for --source serial
+python3 -m pip install bleak        # only for --source ble
 ```
+
+`bleak` is not the same kind of dependency as `pyserial`. `pyserial` is
+pure Python; `bleak` is a facade over a compiled platform backend —
+`pyobjc` on macOS, WinRT on Windows, D-Bus on Linux — so it is roughly
+5-6 MB and it can fail to build on an old `pip`. It stays behind
+`open_ble_source()` for that reason.
+
+macOS also gates Bluetooth per application: the first run prompts, and a
+terminal that was denied reports "Bluetooth device is turned off" even
+though the adapter is on. Grant it in System Settings > Privacy &
+Security > Bluetooth.
 
 ## Layout
 

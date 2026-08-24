@@ -1,7 +1,7 @@
 /*
   mpu_serial_bridge.ino
   ----------------------
-  Reads accelerometer + gyroscope from an MPU-6050 over I2C and sends the
+  Reads accelerometer + gyroscope from an MPU-6500/6050 over I2C and sends
   values over Serial as CSV, one line per reading:
 
       ax,ay,az,gx,gy,gz
@@ -9,13 +9,23 @@
   - ax,ay,az in "g" (acceleration, ±2g by default)
   - gx,gy,gz in degrees/second (angular rate, ±250°/s by default)
 
-  HARDWARE (confirmed by WHO_AM_I=0x68 diagnostics):
-    The sensor is an MPU-6050 (6 axes, accel + gyro). It has NO
-    magnetometer, so there is no absolute heading: yaw can only be
-    integrated from the gyroscope and will therefore drift over time.
-    Roll and pitch ARE absolute (gravity reference) and stable.
+  HARDWARE (confirmed on the bench Nano by i2c_diag, 2026-08-24):
+    WHO_AM_I (register 0x75) reads 0x70, so the part is an MPU-6500,
+    not the MPU-6050 this sketch was first written for. An earlier
+    version of this comment cited "WHO_AM_I=0x68": 0x68 is the I2C
+    ADDRESS, not the WHO_AM_I value.
 
-  I2C wiring (Arduino Nano, GY-521 / MPU-6050 module):
+    This sketch is correct for both and needs no change. The MPU-6500
+    is register-compatible with the MPU-6050 for everything used here
+    (0x6B PWR_MGMT_1, 0x1B GYRO_CONFIG, 0x1C ACCEL_CONFIG, the 14-byte
+    burst from 0x3B) and has the same sensitivities at these ranges.
+
+    Neither part has a magnetometer, so there is no absolute heading:
+    yaw can only be integrated from the gyroscope and will therefore
+    drift over time. Roll and pitch ARE absolute (gravity reference)
+    and stable.
+
+  I2C wiring (Arduino Nano, GY-521 style breakout):
     VCC -> 5V (the GY-521 has an on-board 3.3V regulator)
     GND -> GND
     SCL -> A5
