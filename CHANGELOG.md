@@ -48,6 +48,17 @@ and versions follow [semantic versioning](https://semver.org/).
   touches.
 - The wired rate is **39 Hz measured**, not the ~50 Hz `docs/protocol.md`
   claimed: the `delay(20)` is only part of a 25.5 ms period.
+- The Windows bundle now ships `typing_extensions`, without which the BLE
+  path died on `import bleak` before touching the radio. `winrt-runtime`
+  requires it on every Python version; bleak's own metadata asks for it
+  only below 3.12, so on the 3.13 interpreter the bundle embeds it looked
+  unnecessary and was not.
+- `config.ble.env` listed no `BLE_*` key at all — the one file whose whole
+  reason to exist is the BLE path had nothing to point at a module — and
+  labelled its serial block `(SOURCE=ble)`. The empty defaults did work
+  (first peripheral advertising the HM-10 service), so the gap only shows
+  with a second module in range, or when a scan finds nothing and there is
+  no documented knob to turn.
 - `core/config.wired.env` — the wired bench could not be run from the
   shipped configuration. `config.env` carries the WiFi layout (7 fields
   with a DeviceID) while the wired path sends 6 fields without one, so

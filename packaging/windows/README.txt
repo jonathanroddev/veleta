@@ -13,7 +13,11 @@ WHAT THIS IS
     PATH is neither used nor changed. Delete the folder and it is gone.
 
 RUNNING IT
+    veleta-core-ble.bat     Start the core on the BLE (battery) sensor.
+                            This is the product path - see below.
     veleta-core.bat         Start the core, using whatever config.env says.
+                            That is the WiFi layout: it listens on UDP and
+                            with a BLE module it waits forever.
     veleta-core-demo.bat    Replay the bundled recording instead, on a loop.
                             No sensor and no network needed - use this to
                             check the whole chain end to end.
@@ -97,8 +101,8 @@ CONFIGURATION
 
 WHAT IS NOT IN THIS BUILD
     - No code signature. See above.
-    - Nothing is missing for BLE: bleak and the WinRT bindings ship
-      inside this package. But this half has never run on Windows. It is
+    - Nothing is missing for BLE: bleak, the WinRT bindings and
+      typing_extensions ship inside this package. But this half is
       developed against macOS CoreBluetooth, and WinRT is a different
       implementation, so treat the first run as a test.
 
@@ -113,6 +117,7 @@ LICENCES
     runtime\LICENSE.txt        Python, redistributed under the PSF licence.
     PYSERIAL-LICENSE.txt       pyserial, redistributed under its BSD licence.
     BLEAK-LICENSE.txt          bleak and the winrt-* bindings, MIT.
+    TYPING-EXTENSIONS-LICENSE.txt  typing_extensions, PSF licence.
 
     The Blender extension is a separate program under GPL v3 or later and is
     not in this package. It talks to this core over a documented network

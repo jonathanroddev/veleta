@@ -49,8 +49,13 @@ boundary**, not a preference:
   core and both imported lazily so only the transport that needs them
   pays: `pyserial` for the wired bench, `bleak` for BLE. Justify anything
   new. Note `bleak` is not pure Python like `pyserial` — it wraps a
-  compiled platform backend (pyobjc / WinRT / D-Bus), which is why the
-  Windows bundle does **not** ship it.
+  compiled platform backend (pyobjc / WinRT / D-Bus), so the Windows
+  bundle ships it as eleven pinned wheels built for that exact
+  interpreter, and each one is a thing that can only first be exercised on
+  Windows. Read the BLE section of `scripts/build_windows_bundle.py`
+  before touching that list: what a wheel *declares* it needs is not what
+  it needs — `winrt-runtime` imports `typing_extensions` unconditionally
+  and says so nowhere bleak's metadata can be read for it.
 - **Code, comments and user-facing messages in English.** Spanish is for
   the customer-facing site and its installation guide, not for the
   repository.
@@ -68,7 +73,7 @@ boundary**, not a preference:
 
 - **Software:** validated end to end without hardware. Two sensor profiles
   at once, recording and playback, reproducible extension build.
-  `python3 -m unittest discover -s tests -t tests` → 66 tests, under a
+  `python3 -m unittest discover -s tests -t tests` → 76 tests, under a
   second, no Blender and no hardware needed.
 - **The extension has never run inside Blender.** There is none on this
   machine. `client.py` and `axes.py` are tested; `__init__.py`, the
@@ -87,10 +92,12 @@ boundary**, not a preference:
 - **No WiFi sensor has ever been connected.** The WT901WIFI is owned but
   unconnected; the AVR WiFi sketch compiles (`arduino:avr:nano`, 38% flash /
   35% RAM), the ESP32 one is compile-untested.
-- **The Windows core package has never run on Windows.**
-  `scripts/build_windows_bundle.py` produces it from this machine and the
-  layout is smoke-tested here with the host interpreter, but the bundled
-  `python.exe` has never been executed. It is unsigned on purpose — a test
+- **The Windows core package has started on Windows once** (2026-08-27,
+  the partner's machine). The bundled `python.exe` runs and finds the
+  core: that much is settled. The run itself died in `import bleak` on a
+  missing `typing_extensions`, now shipped — so **the radio has still
+  never been touched from Windows**, and `bleak`'s WinRT backend remains
+  the least-proven half of the product. It is unsigned on purpose — a test
   build, not a customer one. See `docs/packaging.md`.
 - The recording in `samples/` is **synthetic**, from `fake_sensor.py`.
 

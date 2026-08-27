@@ -78,12 +78,19 @@ SERIAL_SHA256 = ("c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f"
                  "2cf0")
 
 # --- BLE (`--source ble`), the battery path -------------------------------
-# Ten wheels, ~1.2 MiB, all pure-binary and already built for this exact
-# interpreter (cp313 / win_amd64). They can be FETCHED from macOS but never
-# EXERCISED there: the WinRT backend is a different implementation from the
-# CoreBluetooth one the BLE source is developed against, so the first real
-# test of this half happens on Windows. `winrt-runtime` carries its own
-# msvcp140.dll, so no Visual C++ redistributable is needed.
+# Eleven wheels, ~1.4 MiB, built for this exact interpreter (cp313 /
+# win_amd64). They can be FETCHED from macOS but never EXERCISED there: the
+# WinRT backend is a different implementation from the CoreBluetooth one the
+# BLE source is developed against, so the first real test of this half
+# happens on Windows. `winrt-runtime` carries its own msvcp140.dll, so no
+# Visual C++ redistributable is needed.
+#
+# typing_extensions is here because `winrt-runtime` requires it on EVERY
+# Python version, not just the old ones. Reading bleak's own metadata is not
+# enough to find that: bleak asks for it only below 3.12, so on the 3.13
+# interpreter this bundle ships it looks unnecessary and is not. Leaving it
+# out cost a whole trip to the test machine — `import bleak` died on the
+# first line, before the radio was ever touched.
 #
 # Pinned by version AND hash for the same reason the interpreter is.
 BLE_WHEELS = (
@@ -117,11 +124,16 @@ BLE_WHEELS = (
     ("winrt_windows_storage_streams-3.2.1-cp313-cp313-win_amd64.whl",
      "https://files.pythonhosted.org/packages/15/59/601724453b885265c7779d5f8025b043a68447cbc64ceb9149d674d5b724/winrt_windows_storage_streams-3.2.1-cp313-cp313-win_amd64.whl",
      "202c5875606398b8bfaa2a290831458bb55f2196a39c1d4e5fa88a03d65ef915"),
+    ("typing_extensions-4.16.0-py3-none-any.whl",
+     "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+     "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"),
 )
 
 # What of a wheel actually ships: the importable package, never the
 # .dist-info metadata, which is for installers and nothing here installs.
-BLE_PREFIXES = ("bleak/", "winrt/")
+# typing_extensions is one top-level module, so its entry is a whole
+# filename rather than a folder.
+BLE_PREFIXES = ("bleak/", "winrt/", "typing_extensions.py")
 
 # The embeddable build's ._pth is what its interpreter uses instead of the
 # usual sys.path machinery. The stock one exposes only the runtime folder,
@@ -267,27 +279,36 @@ def build(out_dir, cache_dir, download=True):
                     continue
                 add(name, src.read(name))
 
-        # bleak and the WinRT bindings unpack the same way, beside
-        # veleta_core. The winrt-* wheels are one namespace package split
-        # across ten distributions: they all merge into a single winrt/
-        # tree, which is why they are unpacked rather than kept as wheels.
-        ble_licence = None
+        # bleak, the WinRT bindings and typing_extensions unpack the same
+        # way, beside veleta_core. The winrt-* wheels are one namespace
+        # package split across nine distributions: they all merge into a
+        # single winrt/ tree, which is why they are unpacked rather than
+        # kept as wheels.
+        licences = {}
         for path in ble_wheels:
+            distribution = os.path.basename(path).split("-")[0]
             with zipfile.ZipFile(path) as src:
                 for name in sorted(src.namelist()):
                     if name.endswith("/"):
                         continue
                     if name.endswith("dist-info/licenses/LICENSE"):
-                        ble_licence = src.read(name)
+                        licences[distribution] = src.read(name)
                     if not name.startswith(BLE_PREFIXES):
                         continue
                     add(name, src.read(name),
                         executable=name.endswith((".dll", ".pyd")))
-        if ble_licence:
-            text = ble_licence.decode("utf-8").replace("\r\n", "\n")
+        if "bleak" in licences:
+            text = licences["bleak"].decode("utf-8").replace("\r\n", "\n")
             text += ("\n\nThe winrt-* packages are MIT licensed too "
                      "(License-Expression: MIT in each wheel's METADATA).\n")
             add("BLEAK-LICENSE.txt", text.replace("\n", "\r\n").encode("utf-8"))
+        if "typing_extensions" in licences:
+            # PSF, not MIT: its own file rather than a line appended to
+            # bleak's.
+            text = licences["typing_extensions"].decode("utf-8")
+            text = text.replace("\r\n", "\n")
+            add("TYPING-EXTENSIONS-LICENSE.txt",
+                text.replace("\n", "\r\n").encode("utf-8"))
 
         with zipfile.ZipFile(runtime) as src:
             for name in sorted(src.namelist()):
@@ -338,8 +359,8 @@ def main(argv=None):
     n_ble = len([a for a in listed if a.startswith(BLE_PREFIXES)])
     n_runtime = len(listed) - len(core) - n_serial - n_ble
     print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
-    print(f"  bleak/ winrt/  ({n_ble} files, bleak + WinRT bindings, "
-          f"NEVER RUN ON WINDOWS)")
+    print(f"  bleak/ winrt/ typing_extensions.py  ({n_ble} files, "
+          f"bleak + WinRT bindings)")
     print(f"  runtime/  ({n_runtime} files, "
           f"CPython {PY_VERSION} embeddable)")
     print(f"sha256  {digest}")
