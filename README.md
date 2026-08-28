@@ -55,6 +55,51 @@ The source in this repository being public is **not** a grant of licence to
 the proprietary parts. See [`LICENSE`](LICENSE) and the `LICENSE` file in
 each component.
 
+## What the core computes
+
+The three boxes above, zoomed in on the arithmetic. Every step is
+trigonometry, a running sum or a weighted average; the numbers in brackets
+are the sections of [`docs/math.md`](docs/math.md), which explains each one
+in plain language.
+
+```
+  the board · firmware/
+  ─────────────────────
+    accelerometer raw ──▶ / 16384 ──▶  ax ay az   [g]        (1)
+    gyroscope     raw ──▶ / 131   ──▶  gx gy gz   [deg/s]
+                                              │
+                                              │  CSV, one line per reading
+                                              ▼
+  the core · core/veleta_core/
+  ────────────────────────────
+    ax ay az ─────── atan2 ─────────▶ accel_roll, accel_pitch     (2)
+                                              │   where "down" is
+    gx gy gz ── − bias ── + rate·dt ─▶ prediction                 (3, 4)
+                                              │   how far it turned
+                                              ▼
+             0.98 · prediction  +  0.02 · accel_angles            (4)
+                                              │   complementary filter
+                                              ▼
+                                  roll, pitch, yaw  [deg]
+                                              │
+                              from_euler_zyx  │                   (5)
+                                              ▼
+                                       q = (w, x, y, z)
+                                              │
+                                   offset · q │                   (6)
+                                              │   zero = inverse of the pose held at calibration
+                                              │  JSON, one pose per datagram
+                                              ▼
+  the consumer · blender/
+  ───────────────────────
+       signed permutation of (roll, pitch, yaw) ──▶ the scene     (7)
+```
+
+Roll and pitch are absolute — gravity is their reference. **Yaw is
+integrated gyroscope only and will drift**, because an MPU-6500 carries no
+magnetometer; `recenter` is how it is cancelled. A `fused` sensor such as
+the WT901WIFI does steps 1-4 on the chip and the core starts at step 5.
+
 ## Running it
 
 The core, and a sensor if you have one:
@@ -105,7 +150,7 @@ veleta/
 ├── firmware/     wifi/ (ESP32, Nano+ESP-01) · wired/ (Nano, USB serial)
 ├── core/         veleta_core/ (the program) · tools/ (diagnostics, fake sensor)
 ├── blender/      the extension: manifest, panel, client, axis mapping, demo
-├── docs/         protocol · context · hardware · installation · packaging
+├── docs/         protocol · math · context · hardware · installation · packaging
 ├── scripts/      build_extension.py
 ├── samples/      recordings, for the demo and the tests
 └── tests/        66 tests, standard library only
@@ -116,6 +161,7 @@ veleta/
 | | |
 |---|---|
 | [`docs/protocol.md`](docs/protocol.md) | Both wire formats and the recording format. The contract that makes the core an independent program |
+| [`docs/math.md`](docs/math.md) | Every calculation the core makes, in the order a reading passes through it |
 | [`docs/context.md`](docs/context.md) | Why the product is shaped like this, and what changed in the split |
 | [`docs/hardware.md`](docs/hardware.md) | What is in the kit, what is compatible, what has never been tested |
 | [`docs/installation.md`](docs/installation.md) | For the person who bought a kit |
