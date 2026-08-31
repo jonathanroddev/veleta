@@ -188,8 +188,13 @@ def fetch(cache_dir, name, url, expected_sha256, download=True):
     return path
 
 
-def collect_core():
-    """The core's own files, as (abs path, path inside the bundle)."""
+def collect_core(wired_only=False):
+    """The core's own files, as (abs path, path inside the bundle).
+
+    `wired_only` builds the trimmed package for the wired-first v1: no
+    WiFi or BLE config, launcher or dependency travels in it, so it stays
+    small and there is nothing to point a customer at by mistake.
+    """
     out = []
     source = os.path.join(ROOT, "core", "veleta_core")
     for folder, dirs, files in os.walk(source):
@@ -200,24 +205,31 @@ def collect_core():
             full = os.path.join(folder, name)
             rel = os.path.relpath(full, source).replace(os.sep, "/")
             out.append((full, f"veleta_core/{rel}"))
-    out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
     # The wired/Bluetooth-serial layout is a different set of IDX_*, so it
     # ships as its own file: without it a serial sensor is UNPARSED here too.
     out.append((os.path.join(ROOT, "core", "config.wired.env"),
                 "config.wired.env"))
-    # The BLE path ships complete: see BLE_WHEELS.
-    out.append((os.path.join(ROOT, "core", "config.ble.env"),
-                "config.ble.env"))
+    if not wired_only:
+        out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
+        # The BLE path ships complete: see BLE_WHEELS.
+        out.append((os.path.join(ROOT, "core", "config.ble.env"),
+                    "config.ble.env"))
     out.append((os.path.join(ROOT, "LICENSE"), "LICENSE"))
     out.append((os.path.join(ROOT, SAMPLE), "samples/wt901_desk_wobble.jsonl"))
-    for name in ("veleta-core.bat", "veleta-core-demo.bat",
-                 "veleta-core-ble.bat", "list-ports.bat",
-                 "README.txt", "PYSERIAL-LICENSE.txt"):
+    if wired_only:
+        bat_names = ("veleta-core-wired.bat", "veleta-core-demo.bat",
+                     "list-ports.bat", "PYSERIAL-LICENSE.txt")
+        out.append((os.path.join(PACKAGING, "README-wired.txt"), "README.txt"))
+    else:
+        bat_names = ("veleta-core.bat", "veleta-core-demo.bat",
+                     "veleta-core-ble.bat", "veleta-core-wired.bat",
+                     "list-ports.bat", "README.txt", "PYSERIAL-LICENSE.txt")
+    for name in bat_names:
         out.append((os.path.join(PACKAGING, name), name))
     return sorted(out, key=lambda pair: pair[1])
 
 
-def check():
+def check(wired_only=False):
     """Refuse to build something that would be wrong on arrival."""
     problems = []
     version, package = repo_version(), package_version()
@@ -225,7 +237,7 @@ def check():
         problems.append("veleta_core/__init__.py declares no __version__")
     elif package != version:
         problems.append(f"package version {package} != VERSION {version}")
-    for full, arc in collect_core():
+    for full, arc in collect_core(wired_only):
         if not os.path.isfile(full):
             problems.append(f"missing: {os.path.relpath(full, ROOT)}")
         # The GPL side never travels inside the proprietary package.
@@ -247,15 +259,17 @@ def _payload(full, arc, version):
     return data
 
 
-def build(out_dir, cache_dir, download=True):
+def build(out_dir, cache_dir, download=True, wired_only=False):
     version = repo_version()
     runtime = fetch(cache_dir, PY_ZIP, PY_URL, PY_SHA256, download)
     wheel = fetch(cache_dir, SERIAL_WHEEL, SERIAL_URL, SERIAL_SHA256, download)
-    ble_wheels = [fetch(cache_dir, name, url, sha, download)
-                  for name, url, sha in BLE_WHEELS]
+    ble_wheels = ([] if wired_only else
+                  [fetch(cache_dir, name, url, sha, download)
+                   for name, url, sha in BLE_WHEELS])
     os.makedirs(out_dir, exist_ok=True)
-    target = os.path.join(out_dir, f"veleta-core-{version}-win64.zip")
-    top = f"veleta-core-{version}-win64"
+    suffix = "-wired" if wired_only else ""
+    target = os.path.join(out_dir, f"veleta-core{suffix}-{version}-win64.zip")
+    top = f"veleta-core{suffix}-{version}-win64"
     listed = []
 
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -267,7 +281,7 @@ def build(out_dir, cache_dir, download=True):
             zf.writestr(info, data)
             listed.append(arc)
 
-        for full, arc in collect_core():
+        for full, arc in collect_core(wired_only):
             add(arc, _payload(full, arc, version))
 
         # pyserial unpacks beside veleta_core, where the rewritten ._pth
@@ -283,7 +297,8 @@ def build(out_dir, cache_dir, download=True):
         # way, beside veleta_core. The winrt-* wheels are one namespace
         # package split across nine distributions: they all merge into a
         # single winrt/ tree, which is why they are unpacked rather than
-        # kept as wheels.
+        # kept as wheels. The wired-only build carries none of this: it is
+        # the whole point of that build.
         licences = {}
         for path in ble_wheels:
             distribution = os.path.basename(path).split("-")[0]
@@ -337,9 +352,12 @@ def main(argv=None):
                         help="run the checks and build nothing")
     parser.add_argument("--no-download", action="store_true",
                         help="fail instead of fetching the runtime")
+    parser.add_argument("--wired-only", action="store_true",
+                        help="build the trimmed wired-only package: no "
+                             "WiFi config, no BLE launcher or dependencies")
     args = parser.parse_args(argv)
 
-    problems = check()
+    problems = check(args.wired_only)
     for p in problems:
         print(f"ERROR: {p}", file=sys.stderr)
     if problems:
@@ -349,7 +367,8 @@ def main(argv=None):
         return 0
 
     target, listed, digest = build(args.out, args.cache,
-                                   download=not args.no_download)
+                                   download=not args.no_download,
+                                   wired_only=args.wired_only)
     core = [a for a in listed
             if not a.startswith(("runtime/", "serial/") + BLE_PREFIXES)]
     print(f"{target}")
@@ -359,8 +378,11 @@ def main(argv=None):
     n_ble = len([a for a in listed if a.startswith(BLE_PREFIXES)])
     n_runtime = len(listed) - len(core) - n_serial - n_ble
     print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
-    print(f"  bleak/ winrt/ typing_extensions.py  ({n_ble} files, "
-          f"bleak + WinRT bindings)")
+    if args.wired_only:
+        print("  (no BLE/WinRT wheels - wired-only build)")
+    else:
+        print(f"  bleak/ winrt/ typing_extensions.py  ({n_ble} files, "
+              f"bleak + WinRT bindings)")
     print(f"  runtime/  ({n_runtime} files, "
           f"CPython {PY_VERSION} embeddable)")
     print(f"sha256  {digest}")
