@@ -24,23 +24,48 @@ and versions follow [semantic versioning](https://semver.org/).
 - A built-in demo in the extension: **Play demo** replays a bundled
   recording with no core, no sensors and no network, so the extension is
   useful to somebody who installed it without buying a kit.
-- `tests/` — 66 tests covering the quaternion math, frame parsing, the
+- `tests/` — 76 tests covering the quaternion math, frame parsing, the
   complementary filter, calibration, the protocol over real sockets, the
   shipped recordings and the bundled demo.
 - `scripts/build_extension.py` — reproducible extension package.
-
-### Added
-- **BLE transport** (`--source ble`), now the product path: the final
-  assembly runs on a battery, so USB is power only. `firmware/ble/` holds
-  the sensor sketch and a bring-up tool that finds the module's pins and
-  sets its baud and name; `core/veleta_core/sources/ble.py` is the client,
+- **BLE transport** (`--source ble`). `firmware/ble/` holds the sensor
+  sketch and a bring-up tool that finds the module's pins and sets its
+  baud and name; `core/veleta_core/sources/ble.py` is the client,
   with `bleak` imported lazily like `pyserial`. Validated on hardware:
   39.7 Hz delivered, 0.3% loss, poses agreeing with the cable to 0.3 deg.
 - `core/config.ble.env` and `docs/setup_ble_hm10.md`.
 - The BLE device id is the peripheral's advertised name (`AT+NAME`), so
   identity is a property of the module and costs nothing on the wire.
+- **A wired-only Windows core package**, built by
+  `scripts/build_windows_bundle.py --wired-only` and shipped as
+  `veleta-core-wired-<version>-win64.zip`. It carries the cable path and
+  nothing else: no WiFi or BLE configuration, no launcher for either, and
+  none of the eleven bleak/WinRT wheels. Smaller, and it cannot fail in the
+  half of the product that has never run on Windows.
+- `packaging/windows/veleta-core-wired.bat`, in both Windows packages: the
+  cable path had no launcher of its own and had to be reached by passing
+  `--config config.wired.env` to a `.bat` named after the WiFi one.
+- `packaging/windows/README-wired.txt`, packed inside the wired package
+  under the name `README.txt`, so that buyer reads a document with no
+  branches for hardware that is not in the box.
+- **A Spanish installation guide as a PDF**, `Guia-de-instalacion.pdf`,
+  inside the wired package. Four A4 pages covering only the cable path:
+  what is on the drive, unzipping the core, finding the COM port with
+  `list-ports.bat`, installing the extension, the first run in order, and a
+  symptom table for when nothing moves. Rendered from
+  `packaging/windows/guia-instalacion-es.html`; both are committed and the
+  build packs the PDF verbatim, so the package stays byte-reproducible and
+  the build needs no PDF toolchain. `--check` refuses to build when the PDF
+  is older than the HTML.
 
 ### Fixed
+- The bundled demo no longer depends on a coincidence. `veleta-core-demo.bat`
+  passed no `--config`, so it read whatever the package happened to carry —
+  and the wired package carries no `config.env`, leaving it on the built-in
+  defaults, which match the recording's layout by luck rather than by
+  intent. It now passes `core/config.demo.env`, which ships in both
+  packages, and `tests/test_playback.py` replays every sample through that
+  file instead of through `DEFAULTS`.
 - The bench sensor is an **MPU-6500**, not an MPU-6050: `WHO_AM_I` (0x75)
   reads 0x70. The sketch header claimed "confirmed by WHO_AM_I=0x68", which
   confused the I2C address with the WHO_AM_I value. No code change was
@@ -66,9 +91,16 @@ and versions follow [semantic versioning](https://semver.org/).
   not a second parser.
 
 ### Changed
+- **The cable is the product path.** The plan of 2026-08-24 was that the
+  final assembly ran on a battery and USB was power only, which made BLE
+  the path and the cable a bench. v1 leads with the cable instead: it is
+  the path that is proven end to end, and `bleak`'s WinRT backend is still
+  the least-exercised code in the product. **Nothing about BLE was removed
+  or deprecated** — the firmware, `sources/ble.py` and `config.ble.env` all
+  ship, and `sources/ble.py` travels even in the wired-only package.
 - Split out of `sandbox/motion_bridge`, where the fusion lived inside the
-  Blender scripts. The wired and WiFi paths are now two sources of one
-  core rather than two separate programs.
+  Blender scripts. The transports are now sources of one core rather than
+  separate programs.
 - `pyserial` is no longer needed inside Blender. It is an optional
   dependency of the core, used only by the wired bench.
 - The diagnostic readers (`read_udp.py`, `read_serial.py`) now interpret

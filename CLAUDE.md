@@ -28,9 +28,12 @@ boundary**, not a preference:
 ## Rules of the code
 
 - **A different CSV layout is a configuration change**, never a parser
-  change: that is what `IDX_*` in `core/config.env` is for. Three configs
+  change: that is what `IDX_*` in `core/config.env` is for. Four configs
   ship: `config.env` (WiFi, 7 fields), `config.wired.env` and
-  `config.ble.env` (6 fields, no DeviceID).
+  `config.ble.env` (6 fields, no DeviceID), and `config.demo.env` (the
+  bundled recording's layout). **Every shipped launcher names its config**
+  — a path that relies on the built-in defaults instead is one that breaks
+  silently the day the defaults move.
 - **Never out-run a link.** On BLE, over-running does not drop whole
   frames: the HM-10 drops bytes mid-line and the debris still parses as
   six numeric fields. Emitters are paced below a *measured* ceiling, and
@@ -58,7 +61,12 @@ boundary**, not a preference:
   and says so nowhere bleak's metadata can be read for it.
 - **Code, comments and user-facing messages in English.** Spanish is for
   the customer-facing site and its installation guide, not for the
-  repository.
+  repository. The **one** exception inside the repo is
+  `packaging/windows/guia-instalacion-es.html` and the
+  `Guia-de-instalacion.pdf` rendered from it, which ship inside the wired
+  package because they are what the buyer reads. Do not translate them,
+  and re-render the PDF after editing the HTML — `--check` fails when the
+  PDF is the older of the two. Command in `docs/packaging.md`.
 - **The built-in demo is a demo, not a second core.** `blender/playback.py`
   replays a bundled recording of already-fused angles so the extension does
   something for someone with no kit. It must never grow fusion, calibration
@@ -79,16 +87,21 @@ boundary**, not a preference:
   machine. `client.py` and `axes.py` are tested; `__init__.py`, the
   manifest and the panel are written but unexecuted. First job on a machine
   with Blender: `blender --command extension validate dist/veleta-<v>.zip`.
-- **The BLE path is the product path and is validated on real hardware**
-  (2026-08-24): ATmega328P + HM-10 + MPU-6500, 39.7 Hz delivered, 0.3%
-  loss, poses agreeing with the cable to 0.3 deg. The final assembly runs
-  on a battery, so USB is power only. Run it with
-  `python3 -m veleta_core --config config.ble.env`.
-- **The wired bench is validated on real hardware** (2026-08-24): a Nano
-  flashed with `mpu_serial_bridge`, an MPU-6500 at I2C 0x68, 39 Hz measured,
-  fused poses matching gravity to within 0.15 deg. Run it with
+- **The wired path is the product path** (decided 2026-08-31) **and is
+  validated on real hardware** (2026-08-24): a Nano flashed with
+  `mpu_serial_bridge`, an MPU-6500 at I2C 0x68, 39 Hz measured, fused poses
+  matching gravity to within 0.15 deg. Run it with
   `python3 -m veleta_core --config config.wired.env` — the default
-  `config.env` carries the WiFi layout and rejects both 6-field paths.
+  `config.env` carries the WiFi layout and rejects both 6-field paths. The
+  USB cable carries data as well as power, and a classic Bluetooth module
+  is the same path over the air: Windows pairs it as a virtual COM port and
+  `SerialSource` reads it unchanged.
+- **BLE still works and is still validated on real hardware** (2026-08-24):
+  ATmega328P + HM-10 + MPU-6500, 39.7 Hz delivered, 0.3% loss, poses
+  agreeing with the cable to 0.3 deg. Run it with
+  `python3 -m veleta_core --config config.ble.env`. It is no longer what v1
+  leads with — the cable is — but nothing about it has been removed or
+  deprecated, and `sources/ble.py` ships in every package.
 - **No WiFi sensor has ever been connected.** The WT901WIFI is owned but
   unconnected; the AVR WiFi sketch compiles (`arduino:avr:nano`, 38% flash /
   35% RAM), the ESP32 one is compile-untested.
@@ -97,8 +110,10 @@ boundary**, not a preference:
   core: that much is settled. The run itself died in `import bleak` on a
   missing `typing_extensions`, now shipped — so **the radio has still
   never been touched from Windows**, and `bleak`'s WinRT backend remains
-  the least-proven half of the product. It is unsigned on purpose — a test
-  build, not a customer one. See `docs/packaging.md`.
+  the least-proven half of the product. That is a large part of why v1
+  leads with the cable: `--wired-only` builds a package that carries
+  none of it. Both builds are unsigned on purpose — test builds, not
+  customer ones. See `docs/packaging.md`.
 - The recording in `samples/` is **synthetic**, from `fake_sensor.py`.
 
 ## Known uncertainties (resolve with hardware in hand)

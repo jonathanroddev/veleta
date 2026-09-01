@@ -1,8 +1,11 @@
 # Installation
 
 > Written for the person who bought a kit. It is the destination of the QR
-> code on the card in the box. A Spanish translation lives on the download
-> site; this file is the source it is written from.
+> code on the card in the box, and the source the Spanish versions are
+> written from: the download site's guide, and
+> `packaging/windows/guia-instalacion-es.html`, which is rendered to the
+> PDF that ships inside the wired package. **Change here first**, then
+> carry the change across — nothing enforces that they agree.
 
 There are two pieces to install, in this order.
 
@@ -10,21 +13,32 @@ There are two pieces to install, in this order.
 
 The core is the program that talks to the sensors. It comes with the kit.
 
-**Windows.** Unzip `veleta-core-<version>-win64.zip` anywhere you like. It
-installs nothing and changes nothing on your machine: the copy of Python it
-needs travels inside the folder. Then start the file that matches your
-sensor.
+**Windows.** Unzip the core package anywhere you like. It installs nothing
+and changes nothing on your machine: the copy of Python it needs travels
+inside the folder. Then start the file that matches your sensor.
+
+The **cable kit** carries `veleta-core-wired-<version>-win64.zip`, which
+holds that path and nothing else — one launcher to start, one file to
+configure:
 
 | Your sensor | Start |
 |---|---|
+| USB cable (the standard kit) | `veleta-core-wired.bat` |
+| None yet | `veleta-core-demo.bat` |
+
+Other kits carry the full package, `veleta-core-<version>-win64.zip`, which
+adds the launchers for the other sensors:
+
+| Your sensor | Start |
+|---|---|
+| USB cable | `veleta-core-wired.bat` |
 | Bluetooth (the battery kit) | `veleta-core-ble.bat` |
 | WiFi | `veleta-core.bat` |
-| USB cable | `veleta-core.bat --config config.wired.env` |
 | None yet | `veleta-core-demo.bat` |
 
 Starting the wrong one is not obvious from the screen. `veleta-core.bat`
-with a Bluetooth sensor sits waiting for WiFi data that will never arrive,
-and it waits quietly.
+with a cable or Bluetooth sensor sits waiting for WiFi data that will never
+arrive, and it waits quietly.
 
 Whichever you start, it reports what it is listening on and waits. Leave it
 running: Blender talks to it while you work.
@@ -53,16 +67,33 @@ too.
 
 ## 3. What to configure
 
-Very little — and on a one-sensor kit, quite possibly nothing.
+Very little: one line in a text file on the cable kit, and one setting in
+Blender that a default scene already satisfies.
 
-### The core: nothing
+### The core: one line on the cable kit
 
-The configuration file beside it already matches the sensor in the box.
+The configuration file beside it already matches the sensor in the box,
+with one exception that is not optional.
 
-The one setting worth knowing exists is `BLE_NAME` in `config.ble.env`.
-Shipped empty, which means "connect to the first veleta sensor you find" —
-right for one sensor, ambiguous for several. When you own more than one,
-put the name of the one you want there.
+**On the cable kit, the core has to be told which port the sensor arrived
+on.** Windows assigns that number itself, so it cannot be shipped right:
+
+1. Plug the sensor in.
+2. Double-click `list-ports.bat`. It lists the ports Windows can see.
+3. Open `config.wired.env` in Notepad and set `SERIAL_PORT` to the one it
+   showed, e.g. `SERIAL_PORT=COM5`. Save.
+
+That is the whole of it, and it holds until you plug the sensor into a
+different socket. If you would rather not edit anything, pass it instead:
+`veleta-core-wired.bat --serial-port COM5`.
+
+> A wrong port gives a clear error — "could not open port..." — not silence.
+> That is the one failure in this guide that says exactly what is wrong.
+
+On the Bluetooth kit the setting worth knowing exists is `BLE_NAME` in
+`config.ble.env`. Shipped empty, which means "connect to the first veleta
+sensor you find" — right for one sensor, ambiguous for several. When you own
+more than one, put the name of the one you want there.
 
 ### The extension: one setting
 
@@ -90,11 +121,16 @@ it — see [When the object moves wrongly](#when-the-object-moves-wrongly).
 
 ## 4. First run
 
-1. Power the sensor. On the Bluetooth kit the USB lead is **power only** —
-   there is no driver to install and nothing to pair. A veleta sensor never
-   appears in your system's Bluetooth settings, and that is normal: it is
-   not that kind of Bluetooth device. The core finds it on its own.
-   Windows and macOS both ask permission to use Bluetooth the first time.
+1. Connect the sensor.
+   - *Cable kit:* the USB lead carries the readings as well as the power,
+     so plug it into the machine running the core rather than into a phone
+     charger. Set `SERIAL_PORT` once — see [What to
+     configure](#3-what-to-configure).
+   - *Bluetooth kit:* the USB lead is **power only** — there is no driver
+     to install and nothing to pair. A veleta sensor never appears in your
+     system's Bluetooth settings, and that is normal: it is not that kind
+     of Bluetooth device. The core finds it on its own. Windows and macOS
+     both ask permission to use Bluetooth the first time.
 2. Put the sensor **flat and still** on the desk. The core spends its first
    couple of seconds estimating the gyro's resting bias, and a sensor that
    moves during it will drift afterwards. You have about three seconds from
@@ -129,10 +165,19 @@ In order, because the first two are almost always it:
 
 1. **Is the core running?** The panel says "No core at 127.0.0.1:1400"
    when it is not.
-2. **Did you start the right one?** A Bluetooth sensor needs
-   `veleta-core-ble.bat`. `veleta-core.bat` listens for WiFi sensors and
-   will wait for them all day without saying so.
+2. **Did you start the right one?** A cable sensor needs
+   `veleta-core-wired.bat` and a Bluetooth one `veleta-core-ble.bat`.
+   `veleta-core.bat` listens for WiFi sensors and will wait for them all
+   day without saying so.
 3. **Is the sensor powered, and is the core finding it?**
+   - *Cable:* this one does not fail quietly. "could not open port..."
+     means `SERIAL_PORT` names the wrong port, the lead is unplugged, or
+     another program is holding it — including a second copy of the core,
+     so close any other window you left running. Run `list-ports.bat` again
+     to see the number Windows actually gave it. If frames arrive but every
+     one is reported UNPARSED, the core is reading a real port with the
+     wrong configuration: check you started `veleta-core-wired.bat` and not
+     another launcher.
    - *Bluetooth:* the core says which sensor it connected to as it starts.
      "no BLE peripheral advertising..." means it is unpowered, out of
      range, or something else is already connected to it — only one program

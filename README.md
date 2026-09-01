@@ -10,16 +10,22 @@ program fuses and zeroes it and re-exposes it over a documented protocol;
 Blender picks it up and moves a camera or an object. One sensor today, a
 capture suit later, and a Godot adapter after that.
 
-> **Status: nothing has touched real hardware yet.** The software is
-> validated end to end without sensors, and the extension has never been
-> run inside Blender. See [`docs/context.md`](docs/context.md#status).
+> **Status: the cable path is validated on real hardware** (a Nano and an
+> MPU-6500, 39 Hz, poses matching gravity to 0.15 deg) **and is what v1
+> ships.** BLE is validated too and still supported, just no longer what
+> the product leads with. **The extension has never been run inside
+> Blender**, and no WiFi sensor has ever been connected. See
+> [`docs/context.md`](docs/context.md#status).
 
 ## The three components
 
 ```
-   sensor ──CSV over UDP──▶  core  ──JSON over UDP──▶  blender
-  firmware/                  core/                     blender/
-   the board                a plain program            the extension
+   sensor ───CSV───▶  core  ──JSON over UDP──▶  blender
+  firmware/           core/                     blender/
+   the board        a plain program             the extension
+
+   the CSV arrives over a USB cable (v1), a BLE module, or WiFi;
+   which one is a line in config, not a different program
 ```
 
 | | What it does | Licence |
@@ -106,9 +112,18 @@ The core, and a sensor if you have one:
 
 ```bash
 cd core
-python3 -m veleta_core                       # listen for sensors on UDP 1399
+python3 -m veleta_core --config config.wired.env    # a sensor on a USB cable
+python3 -m veleta_core --config config.ble.env      # a BLE module
+python3 -m veleta_core                              # listen on UDP 1399 (WiFi)
 python3 -m veleta_core --play ../samples/wt901_desk_wobble.jsonl --loop
 ```
+
+Each transport has its own configuration file because each sensor lays its
+CSV out differently — the wired and BLE boards send six fields with no
+device id, a WiFi WT901 sends more and names itself. **That is a
+configuration difference, not a parser one**, which is why it is three
+files and not three code paths. Using the wrong one has a single loud
+symptom: every frame reported UNPARSED.
 
 The `--play` line is the point of the recording mode: **the whole pipeline
 — parsing, fusion, calibration — runs with no sensor attached.** It is the
@@ -147,13 +162,13 @@ sockets, and every recording in `samples/`.
 
 ```
 veleta/
-├── firmware/     wifi/ (ESP32, Nano+ESP-01) · wired/ (Nano, USB serial)
+├── firmware/     wired/ (Nano, USB serial) · ble/ (Nano+HM-10) · wifi/ (ESP32, Nano+ESP-01)
 ├── core/         veleta_core/ (the program) · tools/ (diagnostics, fake sensor)
 ├── blender/      the extension: manifest, panel, client, axis mapping, demo
 ├── docs/         protocol · math · context · hardware · installation · packaging
-├── scripts/      build_extension.py
+├── scripts/      build_extension.py · build_windows_bundle.py
 ├── samples/      recordings, for the demo and the tests
-└── tests/        66 tests, standard library only
+└── tests/        76 tests, standard library only
 ```
 
 ## Documentation

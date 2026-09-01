@@ -12,7 +12,7 @@ import tempfile
 import unittest
 
 import context
-from veleta_core.config import DEFAULTS
+from veleta_core.config import DEFAULTS, load
 from veleta_core.engine import Engine
 from veleta_core.recorder import Recorder
 from veleta_core.sources import FileSource
@@ -92,16 +92,32 @@ class TestRoundTrip(unittest.TestCase):
 
 class TestShippedSamples(unittest.TestCase):
     """Whatever is in samples/ has to actually play, or the demo the buyer
-    is pointed at is broken."""
+    is pointed at is broken.
+
+    Replayed through `core/config.demo.env`, which is the configuration the
+    shipped demo launcher passes — not through DEFAULTS. The two agree
+    today, and that is exactly the coincidence worth pinning: a sample
+    recorded from a different sensor, or a change to DEFAULTS, has to fail
+    here rather than on the buyer's machine.
+    """
+
+    def _demo_config(self):
+        path = os.path.join(context.ROOT, "core", "config.demo.env")
+        self.assertTrue(os.path.isfile(path),
+                        "config.demo.env is what the demo launcher passes")
+        cfg, used = load(path)
+        self.assertEqual(used, path)
+        return cfg
 
     def test_every_sample_replays_into_poses(self):
+        cfg = self._demo_config()
         folder = os.path.join(context.ROOT, "samples")
         samples = [f for f in sorted(os.listdir(folder))
                    if f.endswith(".jsonl")]
         self.assertTrue(samples, "no sample recordings shipped")
         for name in samples:
             with self.subTest(sample=name):
-                engine = Engine(dict(DEFAULTS))
+                engine = Engine(dict(cfg))
                 source = FileSource(os.path.join(folder, name),
                                     realtime=False)
                 frames = source.poll(max_batch=100000)
@@ -109,6 +125,23 @@ class TestShippedSamples(unittest.TestCase):
                 poses = [engine.feed(line, now=t) for line, t in frames]
                 self.assertTrue([p for p in poses if p is not None],
                                 f"{name} produced no pose")
+
+    def test_the_demo_config_is_not_the_wired_one(self):
+        """The wired package ships both, and they are a field apart. Pass
+        the wrong one and every frame is UNPARSED — silently, on the one
+        thing a buyer runs before their sensor works."""
+        cfg = self._demo_config()
+        wired, _ = load(os.path.join(context.ROOT, "core",
+                                     "config.wired.env"))
+        self.assertNotEqual(cfg["IDX_ACC_X"], wired["IDX_ACC_X"])
+        sample = os.path.join(context.ROOT, "samples",
+                              "wt901_desk_wobble.jsonl")
+        frames = FileSource(sample, realtime=False).poll(max_batch=100000)
+        engine = Engine(dict(wired))
+        poses = [engine.feed(line, now=t) for line, t in frames]
+        self.assertFalse([p for p in poses if p is not None],
+                         "the wired layout must not silently parse a "
+                         "recording of a fused WiFi sensor")
 
 
 if __name__ == "__main__":

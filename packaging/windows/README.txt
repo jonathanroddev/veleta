@@ -87,6 +87,12 @@ A SENSOR ON A SERIAL PORT (USB CABLE, OR A CLASSIC BLUETOOTH MODULE)
     that is the name to map to an object in the extension.
 
 CONFIGURATION
+    One file per sensor path, beside this one: config.wired.env for a cable
+    or a paired Bluetooth module, config.ble.env for a BLE module,
+    config.env for WiFi. config.demo.env belongs to veleta-core-demo.bat -
+    it is the bundled recording's layout, not a sensor's, and needs no
+    editing.
+
     config.env, beside this file. Plain KEY=value, no quotes. The values
     worth knowing:
         SOURCE          udp (WiFi) | serial (USB or Bluetooth) | file

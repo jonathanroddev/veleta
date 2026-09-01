@@ -4,6 +4,12 @@ The battery path: an ATmega328P board + MPU-6500/6050 + an HM-10 module,
 streaming to the core over Bluetooth Low Energy. No cable for data, no
 mains for a WiFi radio.
 
+> **v1 ships the cable, not this** (decided 2026-08-31). Everything in this
+> guide still works and is still supported — the path is validated on
+> hardware and `sources/ble.py` ships in every package. It is not what the
+> product leads with, because `bleak`'s WinRT backend has never run on
+> Windows. See [`hardware.md`](hardware.md#the-ble-path-the-battery-assembly).
+
 Firmware: [`firmware/ble/mpu_ble_hm10/`](../firmware/ble/mpu_ble_hm10/).
 Bring-up tool: [`firmware/ble/hm10_config/`](../firmware/ble/hm10_config/).
 

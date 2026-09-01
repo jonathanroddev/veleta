@@ -30,4 +30,4 @@ than the demo.
 
 | File | What it is |
 |---|---|
-| `wt901_desk_wobble.jsonl` | 171 frames, ~4 s, one `fused` sensor. **Synthetic** — generated with `core/tools/fake_sensor.py`, not captured from real hardware, because no sensor has ever been connected. Replace it with a real capture as soon as one exists. |
+| `wt901_desk_wobble.jsonl` | 171 frames, ~4 s, one `fused` sensor. **Synthetic** — generated with `core/tools/fake_sensor.py`, not captured from real hardware. It predates the bring-up of 2026-08-24; real wired and BLE sensors have run since, so a real capture is now merely undone rather than impossible. Replace it with one. |

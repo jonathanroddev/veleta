@@ -36,20 +36,32 @@ rather than as a note to self.
 extensions platform contains **only the contents of `blender/`**.
 `scripts/build_extension.py` enforces it and fails the build otherwise.
 
-## The two hardware paths
+## The three hardware paths
 
-| | wired | wifi |
-|---|---|---|
-| Transport | USB serial, 115200 baud | UDP over 2.4 GHz WiFi |
-| Frame | `ax,ay,az,gx,gy,gz` (no id — the cable *is* the id) | `deviceId,...` |
-| Fusion | In the core | In the core for `raw6`; in the sensor for the WT901WIFI |
-| Multi-sensor | No | Native: one socket, routed by DeviceID |
-| Dependencies | `pyserial`, in the core only | None |
-| Role | Test bench | **The sellable kit** |
+| | wired | ble | wifi |
+|---|---|---|---|
+| Transport | USB serial, 115200 baud | HM-10, 38400, one notify characteristic | UDP over 2.4 GHz WiFi |
+| Frame | `ax,ay,az,gx,gy,gz` (no id — the link *is* the id) | the same six fields (id is the advertised BLE name) | `deviceId,...` |
+| Fusion | In the core | In the core | In the core for `raw6`; in the sensor for the WT901WIFI |
+| Multi-sensor | No | One peripheral per connection | Native: one socket, routed by DeviceID |
+| Dependencies | `pyserial`, in the core only | `bleak`, in the core only | None |
+| Measured rate | **39 Hz** | **39.7 Hz, 0.3% loss** | never connected |
+| Role | **The v1 kit**, and the bench | The battery assembly | Where multi-sensor goes |
 
-They used to be two separate programs. They are now two **sources** of one
-core, which is why they finally share the fusion, the calibration and the
-protocol instead of a family resemblance.
+The wired and WiFi paths used to be two separate programs. All three are now
+**sources** of one core, which is why they share the fusion, the calibration
+and the protocol instead of a family resemblance.
+
+A classic Bluetooth module is not a fourth path: it presents itself as a
+virtual COM port, so it is the wired one over the air, with no new code.
+
+> **Why the cable leads v1** (decided 2026-08-31, reversing 2026-08-24).
+> BLE is the better assembly — a battery needs it, and it measures
+> marginally faster — but its PC end rests on `bleak`, whose WinRT backend
+> has still never run on a Windows machine. `pyserial` is pure Python and
+> has no such unknown. The cable is therefore what ships first; nothing
+> about BLE was removed, and `--wired-only` exists so the shipped package
+> does not even carry the untested half.
 
 ## Decisions
 
@@ -165,7 +177,7 @@ attitude and the gyro carries its derivative. Feeding them through the
 filter therefore has to return the attitude that generated them, which
 makes it a fixture rather than a traffic generator.
 
-`tests/` (66 tests, standard library only, no Blender needed) covers the
+`tests/` (76 tests, standard library only, no Blender needed) covers the
 quaternion math against independently built matrices, frame parsing
 including a deliberately reshuffled layout, the filter against attitudes it
 did not see, bias removal, calibration, the protocol over real sockets, and
@@ -185,6 +197,12 @@ python3 -m unittest discover -s tests -t tests
   `axes.py`) are tested; the parts that do (`__init__.py`, the manifest,
   the panel) are written but unexecuted. Validate with
   `blender --command extension validate` before anything else.
-- **Hardware: nothing connected yet.** The firmware is written and
-  unflashed except for the AVR sketch, which compiles. See
+- **Hardware: the wired and BLE boards are validated** (2026-08-24). Both
+  were flashed and driven end to end: real CSV, real fusion, poses matching
+  gravity to 0.15 deg, BLE agreeing with the cable to 0.3 deg. **The wired
+  path is what v1 ships** (2026-08-31). **No WiFi sensor has ever been
+  connected** and those sketches remain unflashed. See
   [`hardware.md`](hardware.md).
+- **Windows: the core package has started once** (2026-08-27), far enough
+  to prove the bundled interpreter finds the core. The radio has never been
+  touched from Windows, which is the reason the cable leads v1.

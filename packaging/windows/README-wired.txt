@@ -16,6 +16,10 @@ WHAT THIS IS
     installed, nothing is written outside this folder, and the machine's
     PATH is neither used nor changed. Delete the folder and it is gone.
 
+    Guia-de-instalacion.pdf, beside this file, is the same walkthrough in
+    Spanish with pictures of where things are. Start there if you would
+    rather follow steps than read a reference.
+
 RUNNING IT
     veleta-core-wired.bat   Start the core on your sensor. This is the one
                             to run.
@@ -79,6 +83,10 @@ CONFIGURATION
 
     A sensor whose numbers land in the wrong place is a config change - the
     IDX_* keys - never a code change.
+
+    config.demo.env, beside it, belongs to veleta-core-demo.bat: it is the
+    field layout of the bundled recording, not of your sensor. Nothing in
+    it needs editing.
 
 WHAT IS NOT IN THIS BUILD
     - No code signature. See above.

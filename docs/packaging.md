@@ -1,11 +1,12 @@
 # Packaging and distribution
 
-Two distributable artifacts, and neither is built by hand.
+Distributable artifacts, and none of them is built by hand.
 
 | Artifact | Built by | Goes to |
 |---|---|---|
 | Extension package (`veleta-<version>.zip`) | `scripts/build_extension.py` | The Blender extensions platform, and the kit as an offline copy |
 | Core package, one per OS (`veleta-core-<version>-win64.zip`) | `scripts/build_windows_bundle.py` — Windows only so far | The download page, and the kit |
+| Wired-only core package (`veleta-core-wired-<version>-win64.zip`) | the same script, `--wired-only` | The wired kit — **this is what v1 ships** |
 
 ## Versioning
 
@@ -63,9 +64,34 @@ One per operating system, shipped with the kit and served from the download
 page. **Windows exists; macOS and Linux do not yet.**
 
 ```bash
-python3 scripts/build_windows_bundle.py            # dist/veleta-core-<v>-win64.zip
-python3 scripts/build_windows_bundle.py --check    # checks only, builds nothing
+python3 scripts/build_windows_bundle.py                # dist/veleta-core-<v>-win64.zip
+python3 scripts/build_windows_bundle.py --wired-only   # dist/veleta-core-wired-<v>-win64.zip
+python3 scripts/build_windows_bundle.py --check        # checks only, builds nothing
 ```
+
+### Two builds, and why the small one is the one that ships
+
+**The cable is the product path for v1**, so there is a package that carries
+that path and nothing else. `--wired-only` leaves out `config.env` (the WiFi
+layout), `config.ble.env`, `veleta-core.bat`, `veleta-core-ble.bat` and all
+eleven bleak/WinRT wheels. What is left is the core, pyserial, the
+interpreter, and a launcher that reads `config.wired.env`.
+
+Two reasons, and the second is the real one:
+
+- **Size and simplicity.** Nothing in the package points at a path the buyer
+  did not buy, so there is no wrong `.bat` to double-click and no second
+  config file to edit by mistake.
+- **It carries nothing unproven.** The BLE half of the full package rests on
+  wheels with a compiled WinRT backend that has still never been exercised on
+  a Windows machine. The wired package cannot fail that way because it does
+  not contain it.
+
+The full build still exists and still builds; it gains the wired `.bat` too.
+It is the package for a kit that is not the wired one. **`sources/ble.py`
+travels in both** — it is standard-library-clean and imports `bleak` lazily,
+so it costs nothing in the wired package and there is no build that has to
+strip source files out of the core.
 
 ### What is in it, and why it is not a frozen .exe
 
@@ -91,12 +117,70 @@ The cost is that the core ships as readable `.py` files. For a test build
 that is fine. If a release is meant to be opaque, decide that deliberately —
 it is not a reason to change this now.
 
-`packaging/windows/` holds the two `.bat` files and the README that go in.
-They are LF in the repository and converted to CRLF when packed.
+`packaging/windows/` holds the `.bat` launchers and the READMEs that go in.
+They are LF in the repository and converted to CRLF when packed, and
+`VERSION_PLACEHOLDER` in them is replaced with the release version as they
+are packed.
 
-The second `.bat` replays the bundled sample on a loop, so the whole chain —
-core, protocol, extension, scene — can be checked on a machine that has no
-sensor anywhere near it.
+There is one launcher per path — `veleta-core-wired.bat`,
+`veleta-core-ble.bat`, `veleta-core.bat` for WiFi — plus `list-ports.bat` and
+`veleta-core-demo.bat`, which replays the bundled sample on a loop so the
+whole chain — core, protocol, extension, scene — can be checked on a machine
+that has no sensor anywhere near it.
+
+### The buyer's guide is a PDF, in Spanish, and it is committed
+
+`packaging/windows/Guia-de-instalacion.pdf` travels inside the wired
+package. It is the document the buyer actually reads: Spanish, A4, four
+pages, covering only the cable path — unzip, find the COM port, install the
+extension, first run, what to check when nothing moves.
+
+It is **rendered from `packaging/windows/guia-instalacion-es.html`** and both
+files are committed. The build packs the PDF verbatim and never generates
+it, which keeps the byte-identical guarantee and keeps the build free of a
+PDF toolchain. To change the guide, edit the HTML and re-render:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf=packaging/windows/Guia-de-instalacion.pdf \
+  file://$PWD/packaging/windows/guia-instalacion-es.html
+```
+
+`--check` fails when the PDF is older than the HTML, because the failure it
+is guarding against is silent: a correction made to the source and never
+rendered ships as the uncorrected guide, and nothing about the zip looks
+wrong.
+
+Two consequences worth knowing. **The guide names no version number**, since
+a PDF cannot carry `VERSION_PLACEHOLDER` through the packing step — it says
+`veleta-core-wired-<versión>-win64.zip` and leaves it there. And it ships
+**only in the wired build**: in the full package it would be instructions
+for hardware the buyer might not have.
+
+This is the one place Spanish is correct inside the repository. The rest —
+code, comments, the other READMEs, this document — stays in English.
+
+**There are two READMEs, and the buyer only ever sees one.** `README.txt` is
+the full package's. `README-wired.txt` is the wired package's and is packed
+**under the name `README.txt`**, so that buyer reads a document that
+describes only the path they have, with no branches for hardware that is not
+in the box. The cost is that a change to what both describe — the firewall,
+the version handshake, the licence list — has to be made in both files;
+nothing enforces that.
+
+`veleta-core-demo.bat` passes `--config config.demo.env`, and that file
+ships in both packages. It used to pass no `--config` at all: in the full
+package it then read `config.env`, and in the wired package — which carries
+no `config.env` — it fell back to the built-in `DEFAULTS`, which happen to
+be the WT901 layout the bundled recording uses. It worked on that
+coincidence, and changing `DEFAULTS` or re-recording the sample from another
+sensor would have broken the one thing a buyer runs before their hardware
+does, silently and with every frame reported UNPARSED.
+
+The demo now names its layout like every other path. `tests/test_playback.py`
+replays every recording in `samples/` through `config.demo.env` rather than
+through `DEFAULTS`, so a sample that drifts from it fails the suite.
 
 **pyserial is bundled**, pinned by hash like the interpreter. It is pure
 Python — no compiled extension anywhere in it — so it unpacks straight into
@@ -113,8 +197,13 @@ of a paired module is found — Windows assigns it, and pairing often creates
 two ports where only the outgoing one works.
 
 **Bluetooth Low Energy is a different matter.** A BLE module is not a serial
-port on any platform we care about; supporting one means a new source in
-`core/veleta_core/sources/`, not a config change.
+port on any platform we care about, so it needed a new source rather than a
+config change — `core/veleta_core/sources/ble.py`, on `bleak`. That is why
+`bleak` and its WinRT bindings are eleven pinned wheels rather than one pure
+Python file, why they are unpacked rather than kept as wheels (nine of them
+merge into a single `winrt/` namespace tree), and why the full package is the
+larger and less proven of the two. Read the BLE section of
+`scripts/build_windows_bundle.py` before touching that list.
 
 ### The firewall, which is not a footnote
 
@@ -125,6 +214,11 @@ Windows machine, so it is called out in the package README rather than left
 to a support conversation.
 
 Only the sensor port is exposed; the consumer port stays on `127.0.0.1`.
+
+This is a WiFi-kit problem. A wired or BLE sensor does not reach the core
+over the network at all, so the wired package should never need the prompt
+for the sensor — but say "allow on private networks" if it appears anyway,
+rather than teaching the buyer to reason about which case they are in.
 
 ### Signing
 
@@ -172,6 +266,7 @@ destination can change without reprinting cards.
 3. Update `CHANGELOG.md`.
 4. `python3 scripts/build_extension.py` and record the sha256.
 5. `blender --command extension validate` on the zip.
-6. Build and sign the core installers.
+6. Build and sign the core packages — `--wired-only` for the wired kit,
+   the full build for any other, both recorded by sha256.
 7. Flash and verify the firmware at that version on real hardware.
 8. Publish the release; point the download page's batch mapping at it.

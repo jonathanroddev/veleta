@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Veleta · Guía de instalación</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm 15mm; }
+
+  :root {
+    --ink: #14181d;
+    --soft: #5a636e;
+    --line: #d4d9df;
+    --accent: #1f5c8f;
+    --warn-bg: #fdf6e6;
+    --warn-line: #d9a441;
+    --code-bg: #f2f4f6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  code, .port {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  /* ---- cover header ---- */
+  .head {
+    border-bottom: 2.5pt solid var(--accent);
+    padding-bottom: 6mm;
+    margin-bottom: 7mm;
+  }
+  .brand {
+    font-size: 27pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .brand span { color: var(--accent); }
+  .subtitle {
+    font-size: 12.5pt;
+    color: var(--soft);
+    margin: 1mm 0 0;
+    font-weight: 400;
+  }
+  .kitline {
+    margin-top: 4mm;
+    font-size: 9.4pt;
+    color: var(--soft);
+  }
+  .kitline strong { color: var(--ink); }
+
+  h2 {
+    font-size: 12.5pt;
+    margin: 8mm 0 2.5mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 0.6pt solid var(--line);
+    page-break-after: avoid;
+  }
+  h2 .num {
+    display: inline-block;
+    min-width: 7mm;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 10.4pt;
+    margin: 5mm 0 1.5mm;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.4mm; }
+
+  .lead { font-size: 10.6pt; color: var(--soft); }
+
+  /* ---- boxes ---- */
+  .note, .warn {
+    border-left: 2.5pt solid var(--accent);
+    background: #f4f8fb;
+    padding: 3mm 4mm;
+    margin: 3mm 0 4mm;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  .warn {
+    border-left-color: var(--warn-line);
+    background: var(--warn-bg);
+  }
+  .note p:last-child, .warn p:last-child { margin-bottom: 0; }
+  .boxtitle { font-weight: 700; display: block; margin-bottom: 1mm; }
+
+  /* ---- tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2mm 0 4mm;
+    font-size: 9.4pt;
+    page-break-inside: avoid;
+  }
+  th {
+    text-align: left;
+    border-bottom: 1pt solid var(--ink);
+    padding: 1.6mm 2mm 1.6mm 0;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  td {
+    border-bottom: 0.5pt solid var(--line);
+    padding: 1.8mm 2mm 1.8mm 0;
+    vertical-align: top;
+  }
+  td:first-child, th:first-child { padding-right: 4mm; }
+  .sym td:first-child { width: 42%; font-weight: 600; }
+
+  /* ---- steps ---- */
+  ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 8mm;
+    margin-bottom: 3mm;
+    page-break-inside: avoid;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.2mm;
+    width: 5.2mm;
+    height: 5.2mm;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 8pt;
+    font-weight: 700;
+    text-align: center;
+    line-height: 5.2mm;
+  }
+
+  .files { font-size: 9.4pt; }
+  .files td:first-child { width: 38%; }
+  .files code { background: none; padding: 0; }
+
+  .footer {
+    margin-top: 9mm;
+    padding-top: 3mm;
+    border-top: 0.6pt solid var(--line);
+    font-size: 8.6pt;
+    color: var(--soft);
+  }
+  .pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1 class="brand">vele<span>ta</span></h1>
+  <p class="subtitle">Guía de instalación · kit con cable</p>
+  <p class="kitline">
+    Sensores de movimiento que animan una escena 3D en tiempo real.
+    Esta guía cubre el <strong>kit con cable</strong>: el sensor se conecta
+    al ordenador por USB y ese mismo cable lleva las lecturas.
+  </p>
+</div>
+
+<p class="lead">
+  Son dos programas y se instalan en este orden: primero el <strong>core</strong>,
+  que habla con el sensor, y después la <strong>extensión de Blender</strong>,
+  que mueve el objeto. Ninguno de los dos instala nada en el sistema.
+</p>
+
+<h2><span class="num">1</span>Antes de empezar</h2>
+
+<table>
+  <tr><td><strong>Sistema</strong></td><td>Windows 10 u 11, de 64 bits (Intel o AMD). No es compatible con Windows ARM.</td></tr>
+  <tr><td><strong>Blender</strong></td><td>Versión 4.2 o posterior. Si no lo tienes, descárgalo de blender.org antes de seguir.</td></tr>
+  <tr><td><strong>Internet</strong></td><td>No hace falta para nada de lo que sigue. El core no envía nada a ninguna parte.</td></tr>
+  <tr><td><strong>Permisos</strong></td><td>No necesitas ser administrador.</td></tr>
+</table>
+
+<h3>Qué hay en este pendrive</h3>
+
+<table class="files">
+  <tr>
+    <td><code>veleta-core-wired-&lt;versión&gt;-win64.zip</code></td>
+    <td>El core, con su propia copia de Python dentro. Es el programa que lee tu sensor.</td>
+  </tr>
+  <tr>
+    <td><code>veleta-&lt;versión&gt;.zip</code></td>
+    <td>La extensión de Blender. Es el archivo pequeño, de unos 30&nbsp;KB: no lo confundas con el anterior.</td>
+  </tr>
+  <tr>
+    <td><code>Guia-de-instalacion.pdf</code></td>
+    <td>Este documento.</td>
+  </tr>
+</table>
+
+<div class="note">
+  <span class="boxtitle">Los dos archivos llevan el mismo número de versión, y es a propósito</span>
+  <p>El core, la extensión y el sensor se publican juntos. Si algún día actualizas
+  uno solo, la extensión te avisará de que no coinciden. No es un aviso cosmético:
+  instálalos siempre por parejas.</p>
+</div>
+
+<h2><span class="num">2</span>Instalar el core</h2>
+
+<ol class="steps">
+  <li><strong>Copia el archivo <code>veleta-core-wired-…-win64.zip</code> del pendrive a tu disco duro</strong>,
+      por ejemplo a <code>Documentos</code>. Evita ejecutarlo desde el propio pendrive.</li>
+  <li><strong>Descomprímelo</strong> (clic derecho → <em>Extraer todo…</em>). Aparecerá una
+      carpeta con varios archivos <code>.bat</code> dentro.</li>
+</ol>
+
+<p>Y ya está: no hay instalador y no se toca nada del sistema. La copia de Python
+que el core necesita viaja dentro de la carpeta, no se usa ni se modifica el
+<code>PATH</code>, y no se escribe nada fuera de ahí. Para desinstalarlo, borra la carpeta.</p>
+
+<div class="warn">
+  <span class="boxtitle">Windows va a mostrarte un aviso, y es esperable</span>
+  <p>Este software todavía no está firmado digitalmente, así que SmartScreen puede
+  decir que procede de un editor desconocido. Pulsa <em>Más información</em> →
+  <em>Ejecutar de todas formas</em>. Es una versión de prueba destinada a equipos
+  de confianza; la versión firmada llegará con la primera tirada comercial.</p>
+</div>
+
+<h2><span class="num">3</span>Decirle al core por dónde llega el sensor</h2>
+
+<p>Es el único ajuste obligatorio, y hay que hacerlo una vez. Windows decide por su
+cuenta qué número de puerto COM le asigna a tu sensor, así que no puede venir puesto
+de fábrica.</p>
+
+<ol class="steps">
+  <li><strong>Conecta el sensor</strong> al ordenador con su cable USB.</li>
+  <li><strong>Haz doble clic en <code>list-ports.bat</code></strong>. Se abrirá una ventana
+      negra con la lista de puertos que Windows ve. Apunta el número: será algo
+      como <span class="port">COM3</span> o <span class="port">COM5</span>.</li>
+  <li><strong>Abre <code>config.wired.env</code></strong> con el Bloc de notas (clic derecho →
+      <em>Abrir con</em> → <em>Bloc de notas</em>) y busca la línea que empieza por
+      <code>SERIAL_PORT=</code>. Déjala con tu puerto:
+      <br><code>SERIAL_PORT=COM5</code></li>
+  <li><strong>Guarda el archivo</strong> y ciérralo.</li>
+</ol>
+
+<p>Ese valor aguanta hasta que enchufes el sensor en un conector USB distinto. Si
+prefieres no editar nada, también puedes arrancar el core así, desde una ventana
+de comandos abierta en esa carpeta:</p>
+
+<p><code>veleta-core-wired.bat --serial-port COM5</code></p>
+
+<div class="note">
+  <span class="boxtitle">Si te equivocas de puerto, te lo dirá</span>
+  <p>El core se detiene con un mensaje que empieza por <em>«could not open port…»</em>.
+  De todos los fallos posibles en esta guía es el único que se explica solo:
+  vuelve a ejecutar <code>list-ports.bat</code> y corrige el número.</p>
+</div>
+
+<h2><span class="num">4</span>Instalar la extensión en Blender</h2>
+
+<ol class="steps">
+  <li>Abre Blender y ve a <strong>Edit → Preferences → Add-ons</strong>.</li>
+  <li>Pulsa el desplegable <strong>▾</strong> de la esquina superior derecha y elige
+      <strong>Install from Disk…</strong></li>
+  <li>Selecciona <code>veleta-&lt;versión&gt;.zip</code> — el archivo pequeño, no el del core.</li>
+  <li>Asegúrate de que queda <strong>marcada</strong> en la lista para activarla.</li>
+</ol>
+
+<p>Aparecerá una pestaña <strong>Veleta</strong> en la barra lateral de la vista 3D. Si no
+la ves, pulsa la tecla <code>N</code> dentro de la vista para mostrar la barra lateral.</p>
+
+<div class="pagebreak"></div>
+
+<h2><span class="num">5</span>La primera vez que lo usas</h2>
+
+<ol class="steps">
+  <li><strong>Conecta el sensor</strong> al ordenador. En este kit el cable USB lleva las
+      lecturas además de la corriente, así que tiene que ir al ordenador donde corre
+      el core, no a un cargador de móvil.</li>
+  <li><strong>Deja el sensor plano y quieto</strong> sobre la mesa. Al arrancar, el core dedica
+      sus primeros segundos a medir el reposo del giróscopo; si el sensor se mueve
+      durante ese rato, después irá a la deriva. Tienes unos tres segundos desde que
+      arranca.</li>
+  <li><strong>Haz doble clic en <code>veleta-core-wired.bat</code></strong>. Se abre una ventana negra
+      que dice qué está escuchando y se queda ahí. <strong>Déjala abierta</strong>: Blender habla
+      con ella mientras trabajas.</li>
+  <li><strong>En Blender, abre la pestaña Veleta</strong> de la barra lateral y pulsa
+      <strong>Connect</strong>. El panel te dirá la versión del core y qué sensores ve.</li>
+  <li><strong>Comprueba el ajuste «Sensor → object»</strong> en las preferencias de la extensión.
+      Viene como <code>*:Cube</code>, que significa «cualquier sensor mueve el objeto llamado
+      Cube» — el cubo con el que arranca una escena nueva de Blender. Si borraste ese
+      cubo o quieres mover otra cosa, escribe ahí el nombre exacto del objeto tal y
+      como aparece en el <em>outliner</em>.</li>
+  <li><strong>Sujeta el sensor en la postura que quieras tomar como cero</strong> y pulsa
+      <strong>Calibrate</strong>.</li>
+  <li><strong>Mueve el sensor.</strong> El objeto lo sigue.</li>
+</ol>
+
+<h2><span class="num">6</span>Probarlo todo sin tocar el sensor</h2>
+
+<p>Útil para comprobar que Blender, la extensión y tu escena están bien antes de
+pelearte con el hardware — o para saber si un fallo es del sensor o de lo demás.
+Hay dos formas y no comprueban lo mismo:</p>
+
+<table>
+  <tr>
+    <td><strong><code>veleta-core-demo.bat</code></strong></td>
+    <td>Reproduce una grabación incluida, en bucle, pasando por el core de verdad.
+        Comprueba <em>todo menos el sensor</em>. Conéctate desde Blender como siempre.</td>
+  </tr>
+  <tr>
+    <td><strong>Botón «Play demo»</strong><br>(pestaña Veleta)</td>
+    <td>Reproduce una grabación que viaja dentro de la propia extensión, sin core y
+        sin red. Comprueba <em>solo la extensión</em> y tu escena.</td>
+  </tr>
+</table>
+
+<p>Si con la demo el objeto se mueve y con el sensor real no, el problema está en el
+sensor o en su cable, no en el software.</p>
+
+<h2><span class="num">7</span>Si no se mueve nada</h2>
+
+<p>En este orden, porque los dos primeros son casi siempre la causa:</p>
+
+<table class="sym">
+  <tr><th>Lo que ves</th><th>Qué mirar</th></tr>
+  <tr>
+    <td>El panel dice «No core at 127.0.0.1:1400»</td>
+    <td>El core no está en marcha. Vuelve a abrir <code>veleta-core-wired.bat</code> y deja
+        la ventana abierta.</td>
+  </tr>
+  <tr>
+    <td>La ventana del core se cierra sola y dice <em>«could not open port…»</em></td>
+    <td>El puerto de <code>SERIAL_PORT</code> no es el bueno, el cable está desenchufado, o
+        otro programa tiene el puerto cogido — incluida una segunda copia del propio
+        core que dejaste abierta. Cierra las demás ventanas y repite el paso 3.</td>
+  </tr>
+  <tr>
+    <td>El core arranca pero repite «UNPARSED» en cada línea</td>
+    <td>Está leyendo un puerto que no es el del sensor, o has abierto otro
+        <code>.bat</code> que no es <code>veleta-core-wired.bat</code>.</td>
+  </tr>
+  <tr>
+    <td>El panel de Blender lista el sensor, pero el objeto no se mueve</td>
+    <td>El nombre en «Sensor → object» no coincide con ningún objeto de la escena.
+        Compáralo con el <em>outliner</em>, mayúsculas incluidas. Es la causa más
+        frecuente y no da ningún error.</td>
+  </tr>
+  <tr>
+    <td>El panel avisa de versiones distintas</td>
+    <td>El core y la extensión no son de la misma entrega. Instala los dos archivos
+        del mismo pendrive.</td>
+  </tr>
+</table>
+
+<h2><span class="num">8</span>Si se mueve al revés o por el eje equivocado</h2>
+
+<p>Casi siempre es cómo has montado físicamente el sensor, no un fallo. En las
+preferencias de la extensión hay dos ajustes y arreglan cosas distintas:</p>
+
+<ul>
+  <li><strong>Gira bien pero al revés</strong> → cambia el signo correspondiente
+      (<em>Sign</em> de Roll, Pitch o Yaw).</li>
+  <li><strong>Giras un eje y responde otro</strong> → eso es el <strong>Axis map</strong>. Ningún
+      signo lo arregla; hay que mover cada fuente a la ranura que debe mandar, por
+      ejemplo <code>pitch,roll,yaw</code> intercambia <em>roll</em> y <em>pitch</em>.</li>
+</ul>
+
+<p>Gira un eje cada vez y observa cuál responde. Se ajusta una sola vez, después de
+montar el sensor en su sitio definitivo.</p>
+
+<div class="note">
+  <span class="boxtitle">Una cosa que no es un fallo</span>
+  <p>El giro horizontal (<em>yaw</em>) se va desviando poco a poco con el tiempo. Este
+  sensor no lleva brújula, así que ese eje no tiene un norte al que agarrarse. Se
+  corrige volviendo a pulsar <strong>Calibrate</strong>, o con <em>recenter</em> desde el panel,
+  cuando lo notes. La inclinación (<em>roll</em> y <em>pitch</em>) no tiene ese problema:
+  se apoya en la gravedad.</p>
+</div>
+
+<div class="footer">
+  Veleta · guía de instalación del kit con cable. El core es software propietario;
+  la extensión de Blender se distribuye bajo licencia GPL v3 o posterior y lleva su
+  propio archivo de licencia dentro del paquete. Los archivos <code>LICENSE</code> que
+  acompañan a cada parte son la referencia.
+</div>
+
+</body>
+</html>

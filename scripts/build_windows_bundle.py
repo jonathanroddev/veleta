@@ -148,6 +148,13 @@ EXCLUDE_SUFFIX = (".pyc", ".pyo", ".orig", ".rej")
 # them LF in the repository is what .gitattributes is for.
 CRLF_SUFFIX = (".bat", ".txt", ".env")
 
+# The Spanish installation guide, rendered to PDF and committed. It is a
+# binary and is packed verbatim: no line endings to convert and no
+# VERSION_PLACEHOLDER to substitute, which is why the guide names no
+# version number anywhere in its text.
+GUIDE_PDF = "Guia-de-instalacion.pdf"
+GUIDE_SOURCE = "guia-instalacion-es.html"
+
 SAMPLE = os.path.join("samples", "wt901_desk_wobble.jsonl")
 
 
@@ -209,6 +216,12 @@ def collect_core(wired_only=False):
     # ships as its own file: without it a serial sensor is UNPARSED here too.
     out.append((os.path.join(ROOT, "core", "config.wired.env"),
                 "config.wired.env"))
+    # The demo names its own layout rather than falling back to whatever
+    # configuration happens to be in the package. The wired build carries
+    # no config.env, so without this the demo ran on the built-in defaults
+    # and only worked because they matched the recording.
+    out.append((os.path.join(ROOT, "core", "config.demo.env"),
+                "config.demo.env"))
     if not wired_only:
         out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
         # The BLE path ships complete: see BLE_WHEELS.
@@ -220,6 +233,12 @@ def collect_core(wired_only=False):
         bat_names = ("veleta-core-wired.bat", "veleta-core-demo.bat",
                      "list-ports.bat", "PYSERIAL-LICENSE.txt")
         out.append((os.path.join(PACKAGING, "README-wired.txt"), "README.txt"))
+        # The buyer's guide, in Spanish, as a PDF they can read before
+        # unzipping anything. It describes the cable kit specifically, so
+        # it travels only in this build: in the full package it would be
+        # instructions for hardware the buyer may not have. Built from
+        # packaging/windows/guia-instalacion-es.html — see docs/packaging.md.
+        out.append((os.path.join(PACKAGING, GUIDE_PDF), GUIDE_PDF))
     else:
         bat_names = ("veleta-core.bat", "veleta-core-demo.bat",
                      "veleta-core-ble.bat", "veleta-core-wired.bat",
@@ -246,6 +265,19 @@ def check(wired_only=False):
     sample = os.path.join(ROOT, SAMPLE)
     if os.path.isfile(sample) and os.path.getsize(sample) == 0:
         problems.append(f"{SAMPLE} is empty; the demo .bat would do nothing")
+    if wired_only:
+        guide = os.path.join(PACKAGING, GUIDE_PDF)
+        source = os.path.join(PACKAGING, GUIDE_SOURCE)
+        if os.path.isfile(guide) and os.path.isfile(source):
+            # A PDF older than the HTML it was rendered from is a guide
+            # that ships without the correction someone just made to it.
+            if os.path.getmtime(guide) < os.path.getmtime(source):
+                problems.append(
+                    f"{GUIDE_PDF} is older than {GUIDE_SOURCE}; re-render it "
+                    f"(see docs/packaging.md)")
+            with open(guide, "rb") as f:
+                if f.read(5) != b"%PDF-":
+                    problems.append(f"{GUIDE_PDF} is not a PDF")
     return problems
 
 

@@ -16,16 +16,16 @@ distributed with the Blender extension.
 
 ```
 firmware/
+├── wired/                      the v1 path
+│   ├── mpu_serial_bridge/      Nano + MPU-6500 over USB serial, 39 Hz
+│   ├── i2c_diag/               I2C scan: is the sensor even there?
+│   └── backups/                flash/EEPROM dumps (gitignored)
 ├── ble/
 │   ├── mpu_ble_hm10/           ATmega328P + HM-10 + MPU-6500, 40 Hz
 │   └── hm10_config/            find the module's pins and set its baud/name
-├── wifi/
-│   ├── mpu_wifi_esp32/         ESP32 + MPU-6050, native WiFi, 100-200 Hz
-│   └── mpu_wifi_avr_esp01/     ATmega328P + ESP-01 + MPU-6050, ~20 Hz
-└── wired/
-    ├── mpu_serial_bridge/      Nano + MPU-6500 over USB serial, 39 Hz
-    ├── i2c_diag/               I2C scan: is the sensor even there?
-    └── backups/                flash/EEPROM dumps (gitignored)
+└── wifi/
+    ├── mpu_wifi_esp32/         ESP32 + MPU-6050, native WiFi, 100-200 Hz
+    └── mpu_wifi_avr_esp01/     ATmega328P + ESP-01 + MPU-6050, ~20 Hz
 ```
 
 `mpu_wifi_avr_esp01/` is named after the **architecture, not the board**.
@@ -42,20 +42,29 @@ BLE needs none: there is no network to join. The module's identity is its
 advertised BLE name, set with `AT+NAME`, and the core uses it as the
 device id — so a BLE board has nothing secret to keep out of the repo.
 
-## The BLE path is the product path
+## Which path the kit ships
 
-`ble/` is where the kit is going: the final assembly runs on a battery, so
-there is no cable to carry data and no mains to feed a WiFi radio. It
-measures **39.7 Hz delivered with 0.3% loss**, which beats the wired bench
-and matches what the ESP32 would give on a fraction of the power.
+**`wired/` is the product path for v1** (decided 2026-08-31). The USB lead
+carries the readings as well as the power, `mpu_serial_bridge` measures
+**39 Hz**, and it is the path with nothing unproven under it on the PC side:
+the core reads it with `pyserial`, which is pure Python and ships in every
+package.
 
-It has one hard rule, spelled out in the sketch: **never out-run the
+**`ble/` is fully supported and is not going anywhere.** It measures
+**39.7 Hz delivered with 0.3% loss** — slightly better than the cable — and
+it is what a battery assembly needs, since a board on a battery has no lead
+to carry data and no mains to feed a WiFi radio. What moved it out of first
+place is not the radio but the PC end: `bleak`'s WinRT backend has still
+never been exercised on Windows, so the cable is the path that can be
+shipped with nothing unknown in it.
+
+`ble/` has one hard rule, spelled out in the sketch: **never out-run the
 link**. Over-running does not drop whole frames — the HM-10 drops bytes
 mid-line, and the debris still parses as six numeric fields.
 
 ## State
 
-`ble/mpu_ble_hm10` and `wired/` are **flashed and validated on real
+`wired/` and `ble/mpu_ble_hm10` are **flashed and validated on real
 hardware**. The WiFi sketches are written and **never flashed**. See
 [`docs/hardware.md`](../docs/hardware.md) for exactly what has and has not
 been done, and the setup guides for bring-up.
