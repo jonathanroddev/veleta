@@ -103,6 +103,7 @@ void connectWifi() {
 void setup() {
   Serial.begin(DEBUG_BAUD);
   delay(200);
+  Serial.println("# veleta mpu_wifi_esp32 0.1.0");
   setupMpu();
   connectWifi();
 }

@@ -19,7 +19,7 @@ the buyer's operating system.
 | Part | Model | Notes |
 |---|---|---|
 | Sensor | ATmega328P board + **MPU-6500**, USB lead | 6 axes, fusion in the core, 39 Hz measured |
-| Software | core package + extension | Same version number, shipped together. The wired kit carries the `--wired-only` core build |
+| Software | core package + extension | Same version number, shipped together. The cable kit carries the cable core package |
 | Card | QR → short URL → installation guide | The URL is ours and redirects, so the destination can change without reprinting |
 
 A **battery kit on BLE** and a **WiFi kit on the WT901WIFI** are both

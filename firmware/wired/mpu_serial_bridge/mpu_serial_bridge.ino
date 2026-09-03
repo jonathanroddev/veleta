@@ -45,6 +45,15 @@ void setup() {
   Wire.begin();
   Serial.begin(BAUD_RATE);
 
+  // Version banner, so a board that is already flashed can say what is on
+  // it. No comma anywhere in the line, so the core drops it for having
+  // fewer than MIN_FIELDS fields. In practice the core never sees it at
+  // all: opening the port resets the board and the serial source flushes
+  // whatever arrived while it was settling. This line is for whoever opens
+  // a serial monitor, which until now had no way to tell one build from
+  // another.
+  Serial.println(F("# veleta mpu_serial_bridge 0.1.0"));
+
   // Wake up the MPU-6050 (it boots in "sleep" mode by default)
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x6B);  // PWR_MGMT_1 register

@@ -21,9 +21,20 @@ boundary**, not a preference:
   two talk over the documented protocol and nothing else.
 - **Only `blender/` goes into the extension package.**
   `scripts/build_extension.py` enforces this and must keep doing so.
+- **One core package per sensor path, never a combined one** (decided
+  2026-09-03). A customer buys one kit, so the folder they open holds one
+  launcher, one settings file and a README about the hardware in their box.
+  `--path` selects; there is nothing that produces a mixture. Only `cable`
+  builds today — Bluetooth and WiFi each need their own README first, and
+  the build refuses and says so. **The buyer's guide ships beside the zips,
+  never inside one:** it is read before anything is unzipped.
 - **Firmware, core and extension share one version number.** `VERSION` at
-  the root is the source; `tests/test_version.py` fails when the three
-  copies drift.
+  the root is the source; `tests/test_version.py` fails when the four
+  copies drift — the core, the manifest, the extension module, and **every
+  sketch in `firmware/`**, which prints `# veleta <sketch> <version>` once
+  at boot. The banner carries no comma, so a core reading that stream drops
+  it for having fewer than `MIN_FIELDS` fields. Bump `VERSION` and the
+  sketches go with it.
 
 ## Rules of the code
 
@@ -33,7 +44,11 @@ boundary**, not a preference:
   `config.ble.env` (6 fields, no DeviceID), and `config.demo.env` (the
   bundled recording's layout). **Every shipped launcher names its config**
   — a path that relies on the built-in defaults instead is one that breaks
-  silently the day the defaults move.
+  silently the day the defaults move, and since the Windows package renames
+  these files (`ajustes-sensor.txt` and friends, `PACKAGE_NAMES` in
+  `scripts/build_windows_bundle.py`) the search-order fallback no longer
+  finds anything there at all. Repository names are English; the package is
+  what the buyer double-clicks. See `docs/packaging.md`.
 - **Never out-run a link.** On BLE, over-running does not drop whole
   frames: the HM-10 drops bytes mid-line and the debris still parses as
   six numeric fields. Emitters are paced below a *measured* ceiling, and
@@ -81,18 +96,26 @@ boundary**, not a preference:
 
 - **Software:** validated end to end without hardware. Two sensor profiles
   at once, recording and playback, reproducible extension build.
-  `python3 -m unittest discover -s tests -t tests` → 76 tests, under a
+  `python3 -m unittest discover -s tests -t tests` → 91 tests, under a
   second, no Blender and no hardware needed.
-- **The extension has never run inside Blender.** There is none on this
-  machine. `client.py` and `axes.py` are tested; `__init__.py`, the
-  manifest and the panel are written but unexecuted. First job on a machine
-  with Blender: `blender --command extension validate dist/veleta-<v>.zip`.
+- **The extension has now run inside Blender, once** (reported
+  2026-09-02, the partner's Windows machine): it installed, connected to
+  the core and drove an object. Before that, `__init__.py`, the manifest
+  and the panel were written but unexecuted — `client.py` and `axes.py` are
+  the parts under test. There is still no Blender on this machine, so it
+  remains unexercised here, and
+  `blender --command extension validate dist/veleta-extension-blender-<v>.zip`
+  has never been run. See `docs/fieldnotes.md` — that same session left one
+  open fault.
 - **The wired path is the product path** (decided 2026-08-31) **and is
   validated on real hardware** (2026-08-24): a Nano flashed with
   `mpu_serial_bridge`, an MPU-6500 at I2C 0x68, 39 Hz measured, fused poses
   matching gravity to within 0.15 deg. Run it with
   `python3 -m veleta_core --config config.wired.env` — the default
-  `config.env` carries the WiFi layout and rejects both 6-field paths. The
+  `config.env` carries the WiFi layout and rejects both 6-field paths.
+  **`SERIAL_PORT` is now empty by default and the port is found**: one
+  USB-serial candidate is used and reported `(auto-detected)`, several are
+  listed as an error, and an explicitly set port is never second-guessed. The
   USB cable carries data as well as power, and a classic Bluetooth module
   is the same path over the air: Windows pairs it as a virtual COM port and
   `SerialSource` reads it unchanged.
@@ -105,16 +128,26 @@ boundary**, not a preference:
 - **No WiFi sensor has ever been connected.** The WT901WIFI is owned but
   unconnected; the AVR WiFi sketch compiles (`arduino:avr:nano`, 38% flash /
   35% RAM), the ESP32 one is compile-untested.
-- **The Windows core package has started on Windows once** (2026-08-27,
-  the partner's machine). The bundled `python.exe` runs and finds the
-  core: that much is settled. The run itself died in `import bleak` on a
-  missing `typing_extensions`, now shipped — so **the radio has still
+- **The wired Windows package has run end to end on Windows** (reported
+  2026-09-02, the partner's machine): sketch, USB serial, core, UDP,
+  extension, scene. The earlier attempt (2026-08-27) had only got as far
+  as the bundled `python.exe` finding the core before dying in
+  `import bleak` on a missing `typing_extensions`, now shipped. That path
+  was not retried: this run was the wired build, so **the radio has still
   never been touched from Windows**, and `bleak`'s WinRT backend remains
   the least-proven half of the product. That is a large part of why v1
-  leads with the cable: `--wired-only` builds a package that carries
-  none of it. Both builds are unsigned on purpose — test builds, not
+  leads with the cable: the cable package carries none of it. Both builds are unsigned on purpose — test builds, not
   customer ones. See `docs/packaging.md`.
 - The recording in `samples/` is **synthetic**, from `fake_sensor.py`.
+- **One fault from the 2026-09-02 session is parked, not closed:** an
+  object that turned by itself for several seconds and then stopped,
+  holding the new heading. It is yaw by construction — the only axis with
+  no absolute reference. It did not reappear when the partner cloned the
+  sketch onto a second Arduino with a second MPU-6500 against the same core
+  and extension (2026-09-03), which points at the first sensor but proves
+  nothing: no recording was ever taken. **Jonathan parked the fixes on
+  2026-09-03 — do not write them until the fault is reported again.** Full
+  diagnosis and the candidate causes are in `docs/fieldnotes.md`.
 
 ## Known uncertainties (resolve with hardware in hand)
 
@@ -126,6 +159,9 @@ boundary**, not a preference:
    axis map is now applied **after** the calibration offset, where it used
    to be applied before — see "known differences" in `docs/context.md`.
    Do not copy old `AXIS_MAP` values expecting the same result.
+   The 2026-09-02 session was the first real mounting the product has ever
+   seen, so whether the partner had to touch `AXIS_MAP` / `SIGN_*` is worth
+   asking before anyone changes anything — see `docs/fieldnotes.md`.
 3. **The Nano + ESP-01 rate.** ~20 Hz is an estimate from the AT round trip
    at 9600 baud. Measure it with `read_udp.py` before designing around it.
    For reference, the wired path measured 39 Hz where the docs had estimated

@@ -60,6 +60,7 @@ void setup() {
   Serial.begin(115200);
   delay(800);
   Serial.println();
+  Serial.println(F("# veleta hm10_config 0.1.0"));
   Serial.println(F("=== hm10_config: looking for the module ==="));
 
   for (uint8_t b = 0; b < 2 && !foundBaud; b++) {

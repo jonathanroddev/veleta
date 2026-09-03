@@ -16,50 +16,69 @@ WHAT THIS IS
     installed, nothing is written outside this folder, and the machine's
     PATH is neither used nor changed. Delete the folder and it is gone.
 
-    Guia-de-instalacion.pdf, beside this file, is the same walkthrough in
-    Spanish with pictures of where things are. Start there if you would
-    rather follow steps than read a reference.
+    Guia-de-instalacion.pdf, beside the zip you unzipped rather than
+    inside it, is the same walkthrough in Spanish with pictures of where
+    things are. Start there if you would rather follow steps than read a
+    reference.
 
 RUNNING IT
-    veleta-core-wired.bat   Start the core on your sensor. This is the one
-                            to run.
-    veleta-core-demo.bat    Replay the bundled recording instead, on a loop.
-                            No sensor needed - use this to check the whole
-                            chain end to end (core, protocol, extension,
-                            scene) before the sensor is even connected.
-    list-ports.bat          List the serial ports Windows can see. This is
-                            how you find which COM your sensor was given.
-
-    Both open a console window and keep running until you close it or press
+    veleta-sensor.bat is the one to run. It is the only thing in this
+    folder you need for normal use: it starts the core on your sensor,
+    opens a console window and keeps running until you close it or press
     Ctrl-C. Command line options are passed straight through, e.g.
-        veleta-core-wired.bat --serial-port COM5
+        veleta-sensor.bat --serial-port COM5
+
+    Everything else lives in the diagnostico folder, and is only for when
+    something is wrong or the sensor is not here yet:
+
+    diagnostico\veleta-demo.bat
+        Replay a bundled recording instead of a sensor, on a loop. No
+        sensor needed - it checks the whole chain end to end (core,
+        protocol, extension, scene) and is how you find out whether a fault
+        is the sensor's or the software's. See SEEING IT WORK WITHOUT THE
+        SENSOR.
+    diagnostico\ver-puertos.bat
+        List the serial ports Windows can see. Only needed when the core
+        asks you to choose between them.
 
 FIRST RUN
     1. Plug in the sensor (or pair it first, if it is a classic Bluetooth
        module rather than a cable - it then appears as a virtual COM port,
        exactly like a cable).
-    2. Run list-ports.bat and note the COM number. Windows assigns it, so
-       do not guess it - and pairing a Bluetooth module can create TWO
-       ports, one outgoing and one incoming. The outgoing one is the one to
-       use.
-    3. Edit config.wired.env:
-           SERIAL_PORT=COM5          <- whatever list-ports.bat showed
-           BAUD_RATE=115200          <- must match the sketch
-    4. Double-click veleta-core-wired.bat.
+    2. Double-click veleta-sensor.bat.
 
-    Or, without editing anything:
-        veleta-core-wired.bat --serial-port COM5
+    That is all of it when the sensor is the only USB-serial device on the
+    machine: the core finds the port by itself and prints "(auto-detected)"
+    beside the one it chose.
+
+    With several such devices connected it will not guess. It lists what it
+    found and stops, and you settle it either for one run:
+
+        veleta-sensor.bat --serial-port COM5
+
+    ...or for good, by opening ajustes-sensor.txt - it is a .txt, so a
+    double-click opens it - and filling in:
+
+        SERIAL_PORT=COM5          <- one of the ports it listed
+        BAUD_RATE=115200          <- must match the sketch
+
+    diagnostico\ver-puertos.bat lists those ports on their own. That is
+    how you find which COM a paired Bluetooth module was given: pairing can
+    create TWO ports, one outgoing and one incoming, and the outgoing one
+    is the one that works.
 
     A serial link carries exactly one sensor, so its frames have no device
-    id. The core names it from SERIAL_DEVICE_ID in config.wired.env, and
+    id. The core names it from SERIAL_DEVICE_ID in ajustes-sensor.txt, and
     that is the name to map to an object in the extension.
 
-    Symptom of the wrong COM port or an unpowered/unplugged sensor:
-    "could not open port...". Symptom of a config pointed at the wrong
-    layout: every frame reported UNPARSED.
+    Symptom of an unplugged or unpowered sensor: "none could be found", or
+    "could not open port..." if it went away after the core started.
+    Symptom of a config pointed at the wrong layout: every frame reported
+    UNPARSED.
 
 WITH BLENDER
-    Install the extension zip (veleta-<version>.zip) from
+    Install the extension zip (veleta-extension-blender-<version>.zip)
+    from
     Edit > Preferences > Add-ons > Install from Disk. Start the core first,
     then press Connect in the Veleta tab of the 3D viewport sidebar.
 
@@ -74,9 +93,10 @@ ABOUT THE FIREWALL PROMPT
     networks.
 
 CONFIGURATION
-    config.wired.env, beside this file. Plain KEY=value, no quotes. The
+    ajustes-sensor.txt, beside this file. Plain KEY=value, no quotes. The
     values worth knowing:
-        SERIAL_PORT     the COM port your sensor was given
+        SERIAL_PORT     the COM port your sensor was given. Leave it EMPTY
+                        and the core finds it, which is the normal case.
         BAUD_RATE       must match the sketch (115200 for the bench sketch)
         IDX_*           where each field sits in the sensor's CSV line
         AUTO_CALIBRATE  capture a reference pose a few seconds after start
@@ -84,15 +104,33 @@ CONFIGURATION
     A sensor whose numbers land in the wrong place is a config change - the
     IDX_* keys - never a code change.
 
-    config.demo.env, beside it, belongs to veleta-core-demo.bat: it is the
-    field layout of the bundled recording, not of your sensor. Nothing in
-    it needs editing.
+    diagnostico\ajustes-demo.txt belongs to the demo: it is the field
+    layout of the bundled recording, not of your sensor. Nothing in it
+    needs editing.
+
+SEEING IT WORK WITHOUT THE SENSOR
+    Two ways, and they check different halves. Which one you want depends
+    on what you are trying to find out.
+
+    diagnostico\veleta-demo.bat replays a recording through the real core -
+    parsing, fusion, calibration, the network - so it checks everything
+    except the sensor itself. Connect from Blender exactly as usual.
+
+    The "Play demo" button in the Veleta panel replays a recording that
+    lives inside the extension, with no core and no network at all, so it
+    checks only Blender, the extension and your object mapping.
+
+    Together they say where a fault is. If Play demo moves the object and
+    veleta-demo.bat does not, it is the core or the connection. If both
+    move it and your sensor does not, it is the sensor or its cable. If
+    neither moves it, it is Blender, the extension or the object name.
 
 WHAT IS NOT IN THIS BUILD
     - No code signature. See above.
-    - No WiFi support and no BLE support, on purpose: this is the wired-only
-      build, smaller and simpler because it carries nothing either path
-      would need. If you need WiFi or BLE, that is a different package.
+    - No WiFi support and no BLE support, on purpose. This package is for
+      the cable kit and carries nothing either other path would need.
+      There is no package with every mode in it: a WiFi or Bluetooth kit
+      comes with its own, holding only what that kit uses.
     - 64-bit Intel/AMD only. Not ARM.
 
 LICENCES

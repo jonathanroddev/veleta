@@ -89,6 +89,7 @@ void setup() {
   Wire.begin();
   Serial.begin(115200);
   delay(200);
+  Serial.println(F("# veleta i2c_diag 0.1.0"));
 }
 
 void loop() {

@@ -87,6 +87,10 @@ void setup() {
   writeReg(0x1C, 0x00);   // ACCEL_CONFIG: AFS_SEL=0 -> +/-2 g
   delay(100);
 
+  // Over USB only, never over the radio: the link is paced to a measured
+  // ceiling and a banner is not a frame. Commaless either way, so a core
+  // reading it would drop it.
+  Serial.println(F("# veleta mpu_ble_hm10 0.1.0"));
   Serial.println(F("mpu_ble_hm10: HM-10 on (2,3) @38400, 40 Hz"));
   nextTx = millis();
 }

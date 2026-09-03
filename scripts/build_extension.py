@@ -91,7 +91,12 @@ def check():
 def build(out_dir):
     version = repo_version()
     os.makedirs(out_dir, exist_ok=True)
-    target = os.path.join(out_dir, f"veleta-{version}.zip")
+    # `veleta-<version>.zip` read like the main product beside the core's
+    # zip, when it is the 30 KB half. The name says what it is now. Blender
+    # installs by the manifest `id`, never by the filename, so this is free
+    # to be readable.
+    target = os.path.join(out_dir,
+                          f"veleta-extension-blender-{version}.zip")
     entries = collect()
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
         for full, arc in entries:

@@ -13,22 +13,30 @@ WHAT THIS IS
     PATH is neither used nor changed. Delete the folder and it is gone.
 
 RUNNING IT
-    veleta-core-wired.bat   Start the core on a USB-cable sensor. This is
-                            the one to run for the wired kit - see below.
-    veleta-core-ble.bat     Start the core on the BLE (battery) sensor.
-    veleta-core.bat         Start the core, using whatever config.env says.
-                            That is the WiFi layout: it listens on UDP and
-                            with a wired or BLE sensor it waits forever.
-    veleta-core-demo.bat    Replay the bundled recording instead, on a loop.
-                            No sensor and no network needed - use this to
-                            check the whole chain end to end.
-    list-ports.bat          List the serial ports Windows can see. This is
-                            how you find which COM a wired sensor or a
-                            paired Bluetooth module was given.
+    veleta-sensor.bat
+        Start the core on a USB-cable sensor, or on a paired classic
+        Bluetooth module. This is the one to run for the wired kit - see
+        below.
+    veleta-sensor-bluetooth.bat
+        Start the core on the BLE (battery) sensor.
+    veleta-sensor-wifi.bat
+        Start the core on the WiFi layout in ajustes-wifi.txt: it listens
+        on UDP, and with a wired or BLE sensor it waits forever.
+    diagnostico\veleta-demo.bat
+        Replay the bundled recording instead, on a loop. No sensor and no
+        network needed - use this to check the whole chain end to end, and
+        to tell a sensor fault apart from a software one.
+    diagnostico\ver-puertos.bat
+        List the serial ports Windows can see. Only needed when the core
+        asks you to choose between them, or to find which COM a paired
+        Bluetooth module was given.
+
+    The diagnostico folder holds everything that is not a sensor launcher,
+    so the launchers are the only .bat files beside this README.
 
     Both open a console window and keep running until you close it or press
     Ctrl-C. Command line options are passed straight through, e.g.
-        veleta-core.bat --listen-port 1400
+        veleta-sensor-wifi.bat --listen-port 1400
 
 THE FIREWALL PROMPT MATTERS
     The first time it runs, Windows asks whether to allow it on the network.
@@ -40,7 +48,8 @@ THE FIREWALL PROMPT MATTERS
     to 127.0.0.1 and never leaves the machine.
 
 WITH BLENDER
-    Install the extension zip (veleta-<version>.zip) from
+    Install the extension zip (veleta-extension-blender-<version>.zip)
+    from
     Edit > Preferences > Add-ons > Install from Disk. Start the core first,
     then press Connect in the Veleta tab of the 3D viewport sidebar.
 
@@ -48,56 +57,62 @@ WITH BLENDER
     ship together; if they disagree, the panel says so.
 
 A BLE SENSOR (THE BATTERY KIT)
-    Run veleta-core-ble.bat. That is the whole procedure: it already
-    points at config.ble.env, which carries the 6-field layout BLE needs.
+    Run veleta-sensor-bluetooth.bat. That is the whole procedure: it
+    already points at ajustes-bluetooth.txt, which carries the 6-field
+    layout BLE needs.
 
-    Running veleta-core.bat instead is the easy mistake - that one listens
-    for WiFi sensors over UDP and will wait forever.
+    Running veleta-sensor-wifi.bat instead is the easy mistake - that one
+    listens for WiFi sensors over UDP and will wait forever.
 
     With one module it connects to the first peripheral advertising the
-    HM-10 service. With several, set BLE_NAME in config.ble.env to the
-    name you gave the module with AT+NAME.
+    HM-10 service. With several, set BLE_NAME in ajustes-bluetooth.txt to
+    the name you gave the module with AT+NAME.
 
 A SENSOR ON A SERIAL PORT (USB CABLE, OR A CLASSIC BLUETOOTH MODULE)
     A classic Bluetooth module is a serial link over the air: pair it in
     Windows settings and it appears as a virtual COM port, exactly like a
     USB cable. Both are the same path as far as the core is concerned, and
-    both use veleta-core-wired.bat.
+    both use veleta-sensor.bat.
 
     1. If it is a Bluetooth module (not a cable), pair it first
        (Windows Settings > Bluetooth & devices).
-    2. Run list-ports.bat and note the COM number. Windows assigns it, so
-       do not guess it - and pairing a Bluetooth module can create TWO
-       ports, one outgoing and one incoming. The outgoing one is the one to
-       use.
-    3. Edit config.wired.env:
-           SERIAL_PORT=COM5          <- whatever list-ports.bat showed
-           BAUD_RATE=115200          <- must match the sketch
+    2. Double-click veleta-sensor.bat.
 
-       This file already carries the field layout a wired/serial sensor
-       needs (6 fields, no device id) - config.env's is the WiFi layout and
-       will report every frame UNPARSED if used instead.
-    4. Double-click veleta-core-wired.bat.
+    With exactly one USB-serial device connected that is the whole of it:
+    the core finds the port itself and prints "(auto-detected)" beside the
+    one it chose. A paired Bluetooth module is usually not that case -
+    pairing can create TWO ports, one outgoing and one incoming, and only
+    the outgoing one works - so there the core will list them and stop.
 
-    Or, without editing anything:
-        veleta-core-wired.bat --serial-port COM5
+    Settle it for one run:
+        veleta-sensor.bat --serial-port COM5
+
+    ...or for good, in ajustes-sensor.txt:
+        SERIAL_PORT=COM5          <- one of the ports it listed
+        BAUD_RATE=115200          <- must match the sketch
+
+    diagnostico\ver-puertos.bat lists the same ports on their own if you
+    would rather look first. And note that ajustes-sensor.txt already carries the field
+    layout a wired/serial sensor needs (6 fields, no device id):
+    ajustes-wifi.txt's is the WiFi layout and reports every frame UNPARSED
+    if used instead.
 
     A serial link carries exactly one sensor, so its frames have no device
-    id. The core names it from SERIAL_DEVICE_ID in config.wired.env, and
+    id. The core names it from SERIAL_DEVICE_ID in ajustes-sensor.txt, and
     that is the name to map to an object in the extension.
 
 CONFIGURATION
-    One file per sensor path, beside this one: config.wired.env for a cable
-    or a paired Bluetooth module, config.ble.env for a BLE module,
-    config.env for WiFi. config.demo.env belongs to veleta-core-demo.bat -
-    it is the bundled recording's layout, not a sensor's, and needs no
-    editing.
+    One file per sensor path, beside this one: ajustes-sensor.txt for a
+    cable or a paired Bluetooth module, ajustes-bluetooth.txt for a BLE
+    module, ajustes-wifi.txt for WiFi. diagnostico\ajustes-demo.txt
+    belongs to the demo - it is the bundled recording's layout, not a
+    sensor's, and needs no editing.
 
-    config.env, beside this file. Plain KEY=value, no quotes. The values
-    worth knowing:
+    Plain KEY=value, no quotes. The values worth knowing:
         SOURCE          udp (WiFi) | serial (USB or Bluetooth) | file
         LISTEN_PORT     the port WiFi sensors send to (must match the sensor)
-        SERIAL_PORT     the COM port, when SOURCE=serial
+        SERIAL_PORT     the COM port, when SOURCE=serial. Leave it EMPTY and
+                        the core finds it, which is the normal case.
         IDX_*           where each field sits in the sensor's CSV line
         AUTO_CALIBRATE  capture a reference pose a few seconds after start
 
@@ -111,7 +126,7 @@ WHAT IS NOT IN THIS BUILD
       developed against macOS CoreBluetooth, and WinRT is a different
       implementation, so treat the first run as a test.
 
-      A BLE module never appears in list-ports.bat and cannot be paired
+      A BLE module never appears in ver-puertos.bat and cannot be paired
       in Windows settings: it is not a serial port and never becomes one.
       That is normal. Classic Bluetooth modules (HC-05, HC-06) DO pair as
       a COM port, and work through --source serial.

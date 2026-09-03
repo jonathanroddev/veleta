@@ -19,7 +19,7 @@ DEFAULTS = {
     "SOURCE": "udp",                 # udp | serial | file
     "LISTEN_HOST": "0.0.0.0",
     "LISTEN_PORT": "1399",
-    "SERIAL_PORT": "/dev/cu.usbserial-CHANGE_ME",
+    "SERIAL_PORT": "",               # "" = find the one plugged-in port
     "BAUD_RATE": "115200",
     "SERIAL_DEVICE_ID": "wired",     # the cable carries no DeviceID; this is it
     "BLE_NAME": "",                  # peripheral to connect to; "" = first HM-10

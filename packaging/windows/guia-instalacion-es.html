@@ -196,16 +196,17 @@
 
 <table class="files">
   <tr>
-    <td><code>veleta-core-wired-&lt;versión&gt;-win64.zip</code></td>
-    <td>El core, con su propia copia de Python dentro. Es el programa que lee tu sensor.</td>
-  </tr>
-  <tr>
-    <td><code>veleta-&lt;versión&gt;.zip</code></td>
-    <td>La extensión de Blender. Es el archivo pequeño, de unos 30&nbsp;KB: no lo confundas con el anterior.</td>
-  </tr>
-  <tr>
     <td><code>Guia-de-instalacion.pdf</code></td>
-    <td>Este documento.</td>
+    <td>Este documento. Está suelto, no dentro de ningún <code>.zip</code>: es lo
+        primero que hay que leer y no hace falta descomprimir nada para abrirlo.</td>
+  </tr>
+  <tr>
+    <td><code>veleta-programa-&lt;versión&gt;-windows-x64.zip</code></td>
+    <td>El programa que lee tu sensor, con su propia copia de Python dentro.</td>
+  </tr>
+  <tr>
+    <td><code>veleta-extension-blender-&lt;versión&gt;.zip</code></td>
+    <td>La extensión de Blender. Es el archivo pequeño, de unos 30&nbsp;KB.</td>
   </tr>
 </table>
 
@@ -219,10 +220,12 @@
 <h2><span class="num">2</span>Instalar el core</h2>
 
 <ol class="steps">
-  <li><strong>Copia el archivo <code>veleta-core-wired-…-win64.zip</code> del pendrive a tu disco duro</strong>,
+  <li><strong>Copia el archivo <code>veleta-programa-…-windows-x64.zip</code> del pendrive a tu disco duro</strong>,
       por ejemplo a <code>Documentos</code>. Evita ejecutarlo desde el propio pendrive.</li>
   <li><strong>Descomprímelo</strong> (clic derecho → <em>Extraer todo…</em>). Aparecerá una
-      carpeta con varios archivos <code>.bat</code> dentro.</li>
+      carpeta. Dentro solo hay <strong>un</strong> programa que vayas a abrir,
+      <code>veleta-sensor.bat</code>; lo demás son la configuración, esta misma guía y
+      una carpeta <code>diagnostico</code> que solo se usa si algo falla.</li>
 </ol>
 
 <p>Y ya está: no hay instalador y no se toca nada del sistema. La copia de Python
@@ -239,18 +242,22 @@ que el core necesita viaja dentro de la carpeta, no se usa ni se modifica el
 
 <h2><span class="num">3</span>Decirle al core por dónde llega el sensor</h2>
 
-<p>Es el único ajuste obligatorio, y hay que hacerlo una vez. Windows decide por su
-cuenta qué número de puerto COM le asigna a tu sensor, así que no puede venir puesto
-de fábrica.</p>
+<p><strong>Normalmente no tienes que hacer nada.</strong> Windows decide por su cuenta qué
+número de puerto COM le asigna a tu sensor, así que no puede venir puesto de
+fábrica — pero si el sensor es el único aparato de este tipo conectado, el core lo
+busca solo y lo encuentra. Al arrancar verás el puerto elegido con la palabra
+<code>(auto-detected)</code> al lado.</p>
+
+<p>Solo tienes que intervenir si hay <em>varios</em> aparatos conectados a la vez. En
+ese caso el core no adivina: te los enumera y se detiene, y tú eliges.</p>
 
 <ol class="steps">
-  <li><strong>Conecta el sensor</strong> al ordenador con su cable USB.</li>
-  <li><strong>Haz doble clic en <code>list-ports.bat</code></strong>. Se abrirá una ventana
-      negra con la lista de puertos que Windows ve. Apunta el número: será algo
-      como <span class="port">COM3</span> o <span class="port">COM5</span>.</li>
-  <li><strong>Abre <code>config.wired.env</code></strong> con el Bloc de notas (clic derecho →
-      <em>Abrir con</em> → <em>Bloc de notas</em>) y busca la línea que empieza por
-      <code>SERIAL_PORT=</code>. Déjala con tu puerto:
+  <li><strong>Mira la lista</strong> que acaba de imprimir el core. Si prefieres consultarla
+      aparte, haz doble clic en <code>diagnostico\ver-puertos.bat</code>. El número será algo como
+      <span class="port">COM3</span> o <span class="port">COM5</span>.</li>
+  <li><strong>Abre <code>ajustes-sensor.txt</code></strong> con doble clic (se abre con el Bloc de
+      notas) y busca la línea que empieza por <code>SERIAL_PORT=</code>. Déjala con tu
+      puerto:
       <br><code>SERIAL_PORT=COM5</code></li>
   <li><strong>Guarda el archivo</strong> y ciérralo.</li>
 </ol>
@@ -259,13 +266,14 @@ de fábrica.</p>
 prefieres no editar nada, también puedes arrancar el core así, desde una ventana
 de comandos abierta en esa carpeta:</p>
 
-<p><code>veleta-core-wired.bat --serial-port COM5</code></p>
+<p><code>veleta-sensor.bat --serial-port COM5</code></p>
 
 <div class="note">
-  <span class="boxtitle">Si te equivocas de puerto, te lo dirá</span>
-  <p>El core se detiene con un mensaje que empieza por <em>«could not open port…»</em>.
-  De todos los fallos posibles en esta guía es el único que se explica solo:
-  vuelve a ejecutar <code>list-ports.bat</code> y corrige el número.</p>
+  <span class="boxtitle">Si algo va mal con el puerto, te lo dirá</span>
+  <p>El core se detiene con un mensaje claro: <em>«none could be found»</em> si no hay
+  nada conectado, <em>«more than one to choose from»</em> si hay varios y tienes que
+  elegir tú, y <em>«could not open port…»</em> si el que hay dejó de estar disponible.
+  De todos los fallos posibles en esta guía son los únicos que se explican solos.</p>
 </div>
 
 <h2><span class="num">4</span>Instalar la extensión en Blender</h2>
@@ -274,7 +282,7 @@ de comandos abierta en esa carpeta:</p>
   <li>Abre Blender y ve a <strong>Edit → Preferences → Add-ons</strong>.</li>
   <li>Pulsa el desplegable <strong>▾</strong> de la esquina superior derecha y elige
       <strong>Install from Disk…</strong></li>
-  <li>Selecciona <code>veleta-&lt;versión&gt;.zip</code> — el archivo pequeño, no el del core.</li>
+  <li>Selecciona <code>veleta-extension-blender-&lt;versión&gt;.zip</code> — el pequeño, el que lleva <em>blender</em> en el nombre.</li>
   <li>Asegúrate de que queda <strong>marcada</strong> en la lista para activarla.</li>
 </ol>
 
@@ -293,7 +301,7 @@ la ves, pulsa la tecla <code>N</code> dentro de la vista para mostrar la barra l
       sus primeros segundos a medir el reposo del giróscopo; si el sensor se mueve
       durante ese rato, después irá a la deriva. Tienes unos tres segundos desde que
       arranca.</li>
-  <li><strong>Haz doble clic en <code>veleta-core-wired.bat</code></strong>. Se abre una ventana negra
+  <li><strong>Haz doble clic en <code>veleta-sensor.bat</code></strong>. Se abre una ventana negra
       que dice qué está escuchando y se queda ahí. <strong>Déjala abierta</strong>: Blender habla
       con ella mientras trabajas.</li>
   <li><strong>En Blender, abre la pestaña Veleta</strong> de la barra lateral y pulsa
@@ -316,7 +324,7 @@ Hay dos formas y no comprueban lo mismo:</p>
 
 <table>
   <tr>
-    <td><strong><code>veleta-core-demo.bat</code></strong></td>
+    <td><strong><code>diagnostico\veleta-demo.bat</code></strong></td>
     <td>Reproduce una grabación incluida, en bucle, pasando por el core de verdad.
         Comprueba <em>todo menos el sensor</em>. Conéctate desde Blender como siempre.</td>
   </tr>
@@ -338,19 +346,19 @@ sensor o en su cable, no en el software.</p>
   <tr><th>Lo que ves</th><th>Qué mirar</th></tr>
   <tr>
     <td>El panel dice «No core at 127.0.0.1:1400»</td>
-    <td>El core no está en marcha. Vuelve a abrir <code>veleta-core-wired.bat</code> y deja
+    <td>El core no está en marcha. Vuelve a abrir <code>veleta-sensor.bat</code> y deja
         la ventana abierta.</td>
   </tr>
   <tr>
     <td>La ventana del core se cierra sola y dice <em>«could not open port…»</em></td>
     <td>El puerto de <code>SERIAL_PORT</code> no es el bueno, el cable está desenchufado, o
         otro programa tiene el puerto cogido — incluida una segunda copia del propio
-        core que dejaste abierta. Cierra las demás ventanas y repite el paso 3.</td>
+        core que dejaste abierta. Cierra las demás ventanas y vuelve al paso 3.</td>
   </tr>
   <tr>
     <td>El core arranca pero repite «UNPARSED» en cada línea</td>
     <td>Está leyendo un puerto que no es el del sensor, o has abierto otro
-        <code>.bat</code> que no es <code>veleta-core-wired.bat</code>.</td>
+        <code>.bat</code> que no es <code>veleta-sensor.bat</code>.</td>
   </tr>
   <tr>
     <td>El panel de Blender lista el sensor, pero el objeto no se mueve</td>

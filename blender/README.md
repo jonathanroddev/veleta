@@ -25,7 +25,7 @@ here. `scripts/build_extension.py` enforces it.
 
 ```bash
 python3 ../scripts/build_extension.py
-blender --command extension validate ../dist/veleta-<version>.zip
+blender --command extension validate ../dist/veleta-extension-blender-<version>.zip
 ```
 
 ## What is in here

@@ -180,7 +180,8 @@ void setup() {
   Serial.begin(DEBUG_BAUD);
   esp.begin(ESP_BAUD);
   delay(300);
-  Serial.println(F("\n[bridge] MPU-6050 -> ESP-01 -> UDP"));
+  Serial.println(F("\n# veleta mpu_wifi_avr_esp01 0.1.0"));
+  Serial.println(F("[bridge] MPU-6050 -> ESP-01 -> UDP"));
   setupMpu();
   while (!espConnect()) {
     Serial.println(F("[esp] Retrying in 5 s..."));

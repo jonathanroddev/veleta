@@ -1,7 +1,9 @@
 @echo off
 rem Start the veleta core listening to the BLE sensor (the battery kit).
 rem
-rem This is the one to run with an HM-10 based sensor. veleta-core.bat
+rem Packed into the bundle as veleta-sensor-bluetooth.bat.
+rem
+rem This is the one to run with an HM-10 based sensor. veleta-sensor-wifi.bat
 rem listens for WiFi sensors over UDP instead, and with a BLE module it
 rem would sit there forever receiving nothing.
 rem
@@ -13,7 +15,7 @@ rem that Bluetooth is off while the adapter is clearly on, that is the
 rem permission being denied, not the adapter.
 setlocal
 cd /d "%~dp0"
-"%~dp0runtime\python.exe" -m veleta_core --config config.ble.env %*
+"%~dp0runtime\python.exe" -m veleta_core --config ajustes-bluetooth.txt %*
 set EXITCODE=%ERRORLEVEL%
 if not "%EXITCODE%"=="0" (
   echo.

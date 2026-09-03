@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build the Windows package of the veleta core.
 
-    python3 scripts/build_windows_bundle.py [--out DIR] [--check]
+    python3 scripts/build_windows_bundle.py [--path cable] [--out DIR]
 
 WHAT THIS PRODUCES
-    dist/veleta-core-<version>-win64.zip — the core, plus its own private
+    dist/veleta-programa-<version>-windows-x64.zip — the core, plus its own
     copy of Python. The user unzips it and double-clicks a .bat: nothing is
     installed, nothing is written outside the folder, and the machine's
     PATH is neither read nor changed. Deleting the folder removes it.
@@ -157,6 +157,81 @@ GUIDE_SOURCE = "guia-instalacion-es.html"
 
 SAMPLE = os.path.join("samples", "wt901_desk_wobble.jsonl")
 
+# What each file is called INSIDE the package. The repository stays English,
+# because that is the rule for everything in it; the package is what the
+# buyer double-clicks, which is the same reason the installation guide is
+# the one Spanish document that ships.
+#
+# The extension matters as much as the language. Windows hides known
+# extensions by default, so a file called `config.wired.env` is one a buyer
+# cannot open by double-clicking and cannot obviously open at all — and it
+# used to be step 3 of the first run. `.txt` opens in Notepad from a
+# double-click.
+#
+# A launcher must still NAME its configuration: the search order looks for
+# `config.env`, and nothing ships under that name any more, so a launcher
+# that relied on the fallback would silently run on the built-in defaults.
+# `DIAGNOSTICS` is a folder, not a name: everything that is not "the thing
+# you run" moves into it, so the root holds one launcher, one settings file
+# and the two documents. The buyer's commonest failure is not a wrong
+# setting, it is opening the wrong file — and every extra .bat beside the
+# right one is a chance to do that. Nothing is dropped: the demo is the
+# only way to tell "the core never reaches Blender" apart from "the sensor
+# is broken" without being in the room, which is exactly the question a
+# remote fault report asks.
+#
+# No accent in the folder name on purpose: it travels through a zip onto a
+# Windows filesystem, and `Guia-de-instalacion.pdf` already made that call.
+DIAGNOSTICS = "diagnostico"
+
+PACKAGE_NAMES = {
+    "config.wired.env": "ajustes-sensor.txt",
+    "config.env": "ajustes-wifi.txt",
+    "config.ble.env": "ajustes-bluetooth.txt",
+    "veleta-core-wired.bat": "veleta-sensor.bat",
+    "veleta-core.bat": "veleta-sensor-wifi.bat",
+    "veleta-core-ble.bat": "veleta-sensor-bluetooth.bat",
+    "config.demo.env": f"{DIAGNOSTICS}/ajustes-demo.txt",
+    "veleta-core-demo.bat": f"{DIAGNOSTICS}/veleta-demo.bat",
+    "list-ports.bat": f"{DIAGNOSTICS}/ver-puertos.bat",
+}
+
+
+def packaged_as(name):
+    """The name a file travels under, which is not the name it has here."""
+    return PACKAGE_NAMES.get(name, name)
+
+
+# One package per sensor path, and never a combined one. A customer buys a
+# cable kit, or a Bluetooth one, or a WiFi one — never all three — so the
+# folder they open should hold one launcher, one settings file and a README
+# about the hardware in their box. A package carrying every path is a
+# package where most of what the buyer sees is for somebody else's kit, and
+# the commonest failure is already opening the wrong file.
+#
+# `cable` is the product path and takes the plain name. The other two are
+# not buildable yet, and what is missing is documentation, not code: each
+# needs a README describing only that path. `README.txt` in packaging/ is
+# the old multi-path one, kept as their source material — shipping it
+# inside a single-path package would put back exactly what this removes.
+PATH_LAUNCHER = {
+    "cable": "veleta-core-wired.bat",
+    "bluetooth": "veleta-core-ble.bat",
+    "wifi": "veleta-core.bat",
+}
+PATH_CONFIG = {
+    "cable": "config.wired.env",
+    "bluetooth": "config.ble.env",
+    "wifi": "config.env",
+}
+PATH_README = {"cable": "README-wired.txt"}
+PATH_SUFFIX = {"cable": "", "bluetooth": "-bluetooth", "wifi": "-wifi"}
+
+# A serial port is a thing only the cable path has. `pyserial` follows it:
+# BLE is not a COM port on any platform we care about, and WiFi is a socket.
+PATH_NEEDS_SERIAL = {"cable"}
+PATH_NEEDS_BLE = {"bluetooth"}
+
 
 def repo_version():
     with open(os.path.join(ROOT, "VERSION"), encoding="utf-8") as f:
@@ -195,12 +270,16 @@ def fetch(cache_dir, name, url, expected_sha256, download=True):
     return path
 
 
-def collect_core(wired_only=False):
+def collect_core(path):
     """The core's own files, as (abs path, path inside the bundle).
 
-    `wired_only` builds the trimmed package for the wired-first v1: no
-    WiFi or BLE config, launcher or dependency travels in it, so it stays
-    small and there is nothing to point a customer at by mistake.
+    Everything here is either the core itself, the one sensor path this
+    package is for, or the diagnostics folder — which every package gets,
+    because "is it the sensor or the software?" is a question every buyer
+    eventually asks.
+
+    The buyer's guide is NOT in here. It ships beside the zips, not inside
+    one: it is what somebody reads before they have unzipped anything.
     """
     out = []
     source = os.path.join(ROOT, "core", "veleta_core")
@@ -212,51 +291,55 @@ def collect_core(wired_only=False):
             full = os.path.join(folder, name)
             rel = os.path.relpath(full, source).replace(os.sep, "/")
             out.append((full, f"veleta_core/{rel}"))
-    # The wired/Bluetooth-serial layout is a different set of IDX_*, so it
-    # ships as its own file: without it a serial sensor is UNPARSED here too.
-    out.append((os.path.join(ROOT, "core", "config.wired.env"),
-                "config.wired.env"))
+
+    # This path's own field layout. Each is a different set of IDX_*, and a
+    # package carrying the wrong one reports every frame UNPARSED.
+    config = PATH_CONFIG[path]
+    out.append((os.path.join(ROOT, "core", config), packaged_as(config)))
+
     # The demo names its own layout rather than falling back to whatever
-    # configuration happens to be in the package. The wired build carries
-    # no config.env, so without this the demo ran on the built-in defaults
-    # and only worked because they matched the recording.
+    # configuration happens to be in the package. No package carries a file
+    # called config.env any more, so the search-order fallback would land it
+    # on the built-in defaults.
     out.append((os.path.join(ROOT, "core", "config.demo.env"),
-                "config.demo.env"))
-    if not wired_only:
-        out.append((os.path.join(ROOT, "core", "config.env"), "config.env"))
-        # The BLE path ships complete: see BLE_WHEELS.
-        out.append((os.path.join(ROOT, "core", "config.ble.env"),
-                    "config.ble.env"))
+                packaged_as("config.demo.env")))
     out.append((os.path.join(ROOT, "LICENSE"), "LICENSE"))
-    out.append((os.path.join(ROOT, SAMPLE), "samples/wt901_desk_wobble.jsonl"))
-    if wired_only:
-        bat_names = ("veleta-core-wired.bat", "veleta-core-demo.bat",
-                     "list-ports.bat", "PYSERIAL-LICENSE.txt")
-        out.append((os.path.join(PACKAGING, "README-wired.txt"), "README.txt"))
-        # The buyer's guide, in Spanish, as a PDF they can read before
-        # unzipping anything. It describes the cable kit specifically, so
-        # it travels only in this build: in the full package it would be
-        # instructions for hardware the buyer may not have. Built from
-        # packaging/windows/guia-instalacion-es.html — see docs/packaging.md.
-        out.append((os.path.join(PACKAGING, GUIDE_PDF), GUIDE_PDF))
-    else:
-        bat_names = ("veleta-core.bat", "veleta-core-demo.bat",
-                     "veleta-core-ble.bat", "veleta-core-wired.bat",
-                     "list-ports.bat", "README.txt", "PYSERIAL-LICENSE.txt")
-    for name in bat_names:
-        out.append((os.path.join(PACKAGING, name), name))
+    # Beside the demo that plays it, not at the root: it is the demo's data
+    # and means nothing on its own.
+    out.append((os.path.join(ROOT, SAMPLE),
+                f"{DIAGNOSTICS}/samples/wt901_desk_wobble.jsonl"))
+
+    extras = [PATH_LAUNCHER[path], "veleta-core-demo.bat"]
+    if path in PATH_NEEDS_SERIAL:
+        # Only a serial path has a COM number to go looking for.
+        extras += ["list-ports.bat", "PYSERIAL-LICENSE.txt"]
+    for name in extras:
+        out.append((os.path.join(PACKAGING, name), packaged_as(name)))
+
+    readme = PATH_README.get(path)
+    if readme:
+        out.append((os.path.join(PACKAGING, readme), "README.txt"))
     return sorted(out, key=lambda pair: pair[1])
 
 
-def check(wired_only=False):
+def check(path):
     """Refuse to build something that would be wrong on arrival."""
     problems = []
+    if path not in PATH_LAUNCHER:
+        return [f"unknown path {path!r}"]
+    if path not in PATH_README:
+        problems.append(
+            f"there is no README for the {path} package yet. Write one "
+            f"describing only that path — packaging/windows/README.txt is "
+            f"the old multi-path original to draw it from. A single-path "
+            f"package must not ship a README about hardware the buyer does "
+            f"not have.")
     version, package = repo_version(), package_version()
     if package is None:
         problems.append("veleta_core/__init__.py declares no __version__")
     elif package != version:
         problems.append(f"package version {package} != VERSION {version}")
-    for full, arc in collect_core(wired_only):
+    for full, arc in collect_core(path):
         if not os.path.isfile(full):
             problems.append(f"missing: {os.path.relpath(full, ROOT)}")
         # The GPL side never travels inside the proprietary package.
@@ -265,7 +348,10 @@ def check(wired_only=False):
     sample = os.path.join(ROOT, SAMPLE)
     if os.path.isfile(sample) and os.path.getsize(sample) == 0:
         problems.append(f"{SAMPLE} is empty; the demo .bat would do nothing")
-    if wired_only:
+    if path == "cable":
+        # The guide is not inside the zip any more, but it still ships with
+        # the kit, so it is still checked here: a stale guide is a silent
+        # failure whichever folder it sits in.
         guide = os.path.join(PACKAGING, GUIDE_PDF)
         source = os.path.join(PACKAGING, GUIDE_SOURCE)
         if os.path.isfile(guide) and os.path.isfile(source):
@@ -291,17 +377,27 @@ def _payload(full, arc, version):
     return data
 
 
-def build(out_dir, cache_dir, download=True, wired_only=False):
+def build(out_dir, cache_dir, download=True, path="cable"):
     version = repo_version()
     runtime = fetch(cache_dir, PY_ZIP, PY_URL, PY_SHA256, download)
-    wheel = fetch(cache_dir, SERIAL_WHEEL, SERIAL_URL, SERIAL_SHA256, download)
-    ble_wheels = ([] if wired_only else
-                  [fetch(cache_dir, name, url, sha, download)
-                   for name, url, sha in BLE_WHEELS])
+    wheel = (fetch(cache_dir, SERIAL_WHEEL, SERIAL_URL, SERIAL_SHA256,
+                   download) if path in PATH_NEEDS_SERIAL else None)
+    ble_wheels = ([fetch(cache_dir, name, url, sha, download)
+                   for name, url, sha in BLE_WHEELS]
+                  if path in PATH_NEEDS_BLE else [])
     os.makedirs(out_dir, exist_ok=True)
-    suffix = "-wired" if wired_only else ""
-    target = os.path.join(out_dir, f"veleta-core{suffix}-{version}-win64.zip")
-    top = f"veleta-core{suffix}-{version}-win64"
+    # The buyer reads this name before anything else in the product, and
+    # reads it beside the extension's zip. "core" is our word for it, not
+    # theirs, and `veleta-core-wired-<v>-win64.zip` next to `veleta-<v>.zip`
+    # were two names separated by a suffix — which is why the guide had to
+    # say "the small one, about 30 KB, do not confuse it with the other".
+    # They now differ at the first word after the product name.
+    #
+    # The cable package takes the plain name because it is the product; a
+    # future Bluetooth or WiFi package qualifies itself.
+    stem = f"veleta-programa{PATH_SUFFIX[path]}-{version}-windows-x64"
+    target = os.path.join(out_dir, stem + ".zip")
+    top = stem
     listed = []
 
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -313,17 +409,18 @@ def build(out_dir, cache_dir, download=True, wired_only=False):
             zf.writestr(info, data)
             listed.append(arc)
 
-        for full, arc in collect_core(wired_only):
+        for full, arc in collect_core(path):
             add(arc, _payload(full, arc, version))
 
         # pyserial unpacks beside veleta_core, where the rewritten ._pth
         # already looks. Only the package itself: the .dist-info metadata is
         # for installers, and nothing here installs anything.
-        with zipfile.ZipFile(wheel) as src:
-            for name in sorted(src.namelist()):
-                if not name.startswith("serial/") or name.endswith("/"):
-                    continue
-                add(name, src.read(name))
+        if wheel is not None:
+            with zipfile.ZipFile(wheel) as src:
+                for name in sorted(src.namelist()):
+                    if not name.startswith("serial/") or name.endswith("/"):
+                        continue
+                    add(name, src.read(name))
 
         # bleak, the WinRT bindings and typing_extensions unpack the same
         # way, beside veleta_core. The winrt-* wheels are one namespace
@@ -369,9 +466,21 @@ def build(out_dir, cache_dir, download=True, wired_only=False):
                 add(arc, src.read(name),
                     executable=name.endswith((".exe", ".dll", ".pyd")))
 
+    # The guide travels BESIDE the zips, not inside one. It is what the
+    # buyer reads before they have unzipped anything, and a guide that can
+    # only be reached by first doing the thing it explains is no guide. It
+    # is copied rather than packed, so what lands in the output folder is
+    # exactly what goes on the kit's media.
+    guide = None
+    if path == "cable":
+        guide = os.path.join(out_dir, GUIDE_PDF)
+        with open(os.path.join(PACKAGING, GUIDE_PDF), "rb") as src:
+            with open(guide, "wb") as dst:
+                dst.write(src.read())
+
     with open(target, "rb") as f:
         digest = hashlib.sha256(f.read()).hexdigest()
-    return target, listed, digest
+    return target, listed, digest, guide
 
 
 def main(argv=None):
@@ -384,12 +493,14 @@ def main(argv=None):
                         help="run the checks and build nothing")
     parser.add_argument("--no-download", action="store_true",
                         help="fail instead of fetching the runtime")
-    parser.add_argument("--wired-only", action="store_true",
-                        help="build the trimmed wired-only package: no "
-                             "WiFi config, no BLE launcher or dependencies")
+    parser.add_argument("--path", default="cable",
+                        choices=sorted(PATH_LAUNCHER),
+                        help="which sensor path this package is for. One "
+                             "package per path, never a combined one "
+                             "(default: cable, the product path)")
     args = parser.parse_args(argv)
 
-    problems = check(args.wired_only)
+    problems = check(args.path)
     for p in problems:
         print(f"ERROR: {p}", file=sys.stderr)
     if problems:
@@ -398,9 +509,9 @@ def main(argv=None):
         print("checks passed")
         return 0
 
-    target, listed, digest = build(args.out, args.cache,
-                                   download=not args.no_download,
-                                   wired_only=args.wired_only)
+    target, listed, digest, guide = build(args.out, args.cache,
+                                          download=not args.no_download,
+                                          path=args.path)
     core = [a for a in listed
             if not a.startswith(("runtime/", "serial/") + BLE_PREFIXES)]
     print(f"{target}")
@@ -409,15 +520,17 @@ def main(argv=None):
     n_serial = len([a for a in listed if a.startswith("serial/")])
     n_ble = len([a for a in listed if a.startswith(BLE_PREFIXES)])
     n_runtime = len(listed) - len(core) - n_serial - n_ble
-    print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
-    if args.wired_only:
-        print("  (no BLE/WinRT wheels - wired-only build)")
-    else:
+    if n_serial:
+        print(f"  serial/   ({n_serial} files, pyserial {SERIAL_VERSION})")
+    if n_ble:
         print(f"  bleak/ winrt/ typing_extensions.py  ({n_ble} files, "
               f"bleak + WinRT bindings)")
     print(f"  runtime/  ({n_runtime} files, "
           f"CPython {PY_VERSION} embeddable)")
     print(f"sha256  {digest}")
+    if guide:
+        print(f"\n{guide}")
+        print("  the buyer's guide, beside the zip and not inside it")
     print("\nUNSIGNED: Windows will warn about an unidentified publisher.")
     return 0
 

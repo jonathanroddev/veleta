@@ -276,7 +276,7 @@ class VeletaPreferences(AddonPreferences):
         description="Where the veleta core runs. Normally this machine")
     port: IntProperty(
         name="Core port", default=1400, min=1, max=65535,
-        description="The core's control port (CONTROL_PORT in its config.env)")
+        description="The core's control port (CONTROL_PORT in its settings)")
     ttl: FloatProperty(
         name="Subscription (s)", default=10.0, min=1.0, max=120.0,
         description="How long the core keeps streaming without a renewal")

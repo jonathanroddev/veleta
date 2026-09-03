@@ -17,28 +17,19 @@ The core is the program that talks to the sensors. It comes with the kit.
 and changes nothing on your machine: the copy of Python it needs travels
 inside the folder. Then start the file that matches your sensor.
 
-The **cable kit** carries `veleta-core-wired-<version>-win64.zip`, which
+The **cable kit** carries `veleta-programa-<version>-windows-x64.zip`, which
 holds that path and nothing else — one launcher to start, one file to
 configure:
 
 | Your sensor | Start |
 |---|---|
-| USB cable (the standard kit) | `veleta-core-wired.bat` |
-| None yet | `veleta-core-demo.bat` |
+| USB cable (the standard kit) | `veleta-sensor.bat` |
+| None yet | `diagnostico\veleta-demo.bat` |
 
-Other kits carry the full package, `veleta-core-<version>-win64.zip`, which
-adds the launchers for the other sensors:
-
-| Your sensor | Start |
-|---|---|
-| USB cable | `veleta-core-wired.bat` |
-| Bluetooth (the battery kit) | `veleta-core-ble.bat` |
-| WiFi | `veleta-core.bat` |
-| None yet | `veleta-core-demo.bat` |
-
-Starting the wrong one is not obvious from the screen. `veleta-core.bat`
-with a cable or Bluetooth sensor sits waiting for WiFi data that will never
-arrive, and it waits quietly.
+Other kits will carry their own package, built the same way and holding
+only their path. There is deliberately no package with every sensor mode in
+it: you bought one kit, and a folder full of launchers for hardware you do
+not own is a folder with a wrong file to double-click in it.
 
 Whichever you start, it reports what it is listening on and waits. Leave it
 running: Blender talks to it while you work.
@@ -52,11 +43,11 @@ See [`packaging.md`](packaging.md#signing) for where that stands.
 
 ## 2. The extension
 
-The kit carries it as a zip, `veleta-<version>.zip`. Note it is the small
+The kit carries it as a zip, `veleta-extension-blender-<version>.zip`. Note it is the small
 one, around 30 KB — not the core package, which is far bigger.
 
 1. **Edit → Preferences → Add-ons → ▾ → Install from Disk…**
-2. Pick `veleta-<version>.zip` from the kit.
+2. Pick `veleta-extension-blender-<version>.zip` from the kit.
 3. Tick it to enable it, if it is not already.
 
 The same **Install from Disk…** sits under **Get Extensions → ▾**; either
@@ -75,25 +66,33 @@ Blender that a default scene already satisfies.
 The configuration file beside it already matches the sensor in the box,
 with one exception that is not optional.
 
-**On the cable kit, the core has to be told which port the sensor arrived
-on.** Windows assigns that number itself, so it cannot be shipped right:
+**On the cable kit, plug the sensor in and start the launcher.** Windows
+assigns the port number itself, so it cannot be shipped right — but it does
+not have to be typed either: with the sensor as the only USB-serial device
+connected, the core finds it and says `(auto-detected)` beside the port it
+chose.
 
-1. Plug the sensor in.
-2. Double-click `list-ports.bat`. It lists the ports Windows can see.
-3. Open `config.wired.env` in Notepad and set `SERIAL_PORT` to the one it
-   showed, e.g. `SERIAL_PORT=COM5`. Save.
+With several such devices connected it will not guess. It lists them and
+stops, and you settle it:
 
-That is the whole of it, and it holds until you plug the sensor into a
-different socket. If you would rather not edit anything, pass it instead:
-`veleta-core-wired.bat --serial-port COM5`.
+1. Note the port from the list it printed — or run
+   `diagnostico\ver-puertos.bat` to see the same list on its own.
+2. Open `ajustes-sensor.txt` (a double-click opens it in Notepad) and set
+   `SERIAL_PORT` to it, e.g. `SERIAL_PORT=COM5`. Save.
 
-> A wrong port gives a clear error — "could not open port..." — not silence.
-> That is the one failure in this guide that says exactly what is wrong.
+That holds until you plug the sensor into a different socket. If you would
+rather not edit anything, pass it instead:
+`veleta-sensor.bat --serial-port COM5`.
+
+> None of the port failures are silent: "none could be found" when nothing
+> is connected, "more than one to choose from" when the choice is yours,
+> "could not open port..." when the one named went away. They are the
+> failures in this guide that say exactly what is wrong.
 
 On the Bluetooth kit the setting worth knowing exists is `BLE_NAME` in
-`config.ble.env`. Shipped empty, which means "connect to the first veleta
-sensor you find" — right for one sensor, ambiguous for several. When you own
-more than one, put the name of the one you want there.
+`ajustes-bluetooth.txt`. Shipped empty, which means "connect to the first
+veleta sensor you find" — right for one sensor, ambiguous for several. When
+you own more than one, put the name of the one you want there.
 
 ### The extension: one setting
 
@@ -166,18 +165,19 @@ In order, because the first two are almost always it:
 1. **Is the core running?** The panel says "No core at 127.0.0.1:1400"
    when it is not.
 2. **Did you start the right one?** A cable sensor needs
-   `veleta-core-wired.bat` and a Bluetooth one `veleta-core-ble.bat`.
-   `veleta-core.bat` listens for WiFi sensors and will wait for them all
-   day without saying so.
+   `veleta-sensor.bat` and a Bluetooth one `veleta-sensor-bluetooth.bat`.
+   `veleta-sensor-wifi.bat` listens for WiFi sensors and will wait for them
+   all day without saying so.
 3. **Is the sensor powered, and is the core finding it?**
-   - *Cable:* this one does not fail quietly. "could not open port..."
-     means `SERIAL_PORT` names the wrong port, the lead is unplugged, or
-     another program is holding it — including a second copy of the core,
-     so close any other window you left running. Run `list-ports.bat` again
-     to see the number Windows actually gave it. If frames arrive but every
-     one is reported UNPARSED, the core is reading a real port with the
-     wrong configuration: check you started `veleta-core-wired.bat` and not
-     another launcher.
+   - *Cable:* this one does not fail quietly. "none could be found" means
+     nothing is plugged in. "could not open port..." means the lead came
+     out, or another program is holding it — including a second copy of the
+     core, so close any other window you left running. "more than one to
+     choose from" means several devices are connected and the core will not
+     pick for you; `diagnostico\ver-puertos.bat` shows the same list again. If frames
+     arrive but every one is reported UNPARSED, the core is reading a real
+     port with the wrong configuration: check you started
+     `veleta-sensor.bat` and not another launcher.
    - *Bluetooth:* the core says which sensor it connected to as it starts.
      "no BLE peripheral advertising..." means it is unpowered, out of
      range, or something else is already connected to it — only one program
@@ -215,8 +215,8 @@ and calibration, exactly as live hardware would:
 veleta-core --play samples/wt901_desk_wobble.jsonl --loop
 ```
 
-On Windows that is what `veleta-core-demo.bat` already does, so just start
-it instead.
+On Windows that is what `diagnostico\veleta-demo.bat` already does, so just
+start it instead.
 
 Connect from Blender as usual and the object moves. If it does, and a real
 sensor does not, the fault is the sensor, its power or the network — not

@@ -13,9 +13,10 @@ the I2C sketch's own output, boot messages — is passed through untouched.
 Usage:
     python3 tools/read_serial.py [PORT] [SECONDS] [BAUD]
 
-PORT is required in practice: the Arduino Nano reaches the PC through a
-USB-serial chip, so its name (/dev/cu.wchusbserial*, /dev/cu.usbserial-*,
-/dev/ttyUSB0...) depends on the machine. Find it with `ls /dev/cu.*`.
+PORT can be left out: with exactly one USB-serial device plugged in, this
+picks it the same way the core does. Give it explicitly when several are
+connected — their names (/dev/cu.wchusbserial*, /dev/cu.usbserial-*,
+/dev/ttyUSB0, COM5...) depend on the machine.
 
 Defaults: 8 s, 115200 baud. Needs pyserial.
 """
@@ -25,8 +26,14 @@ import time
 import serial
 
 import _diag
+from veleta_core.sources.serial_source import (SerialPortError,  # noqa: E402
+                                               resolve_port)
 
-port = sys.argv[1] if len(sys.argv) > 1 else "/dev/cu.wchusbserial-CHANGE_ME"
+try:
+    port, auto = resolve_port(sys.argv[1] if len(sys.argv) > 1 else "")
+except SerialPortError as e:
+    print(f"[read_serial] {e}", flush=True)
+    sys.exit(1)
 secs = float(sys.argv[2]) if len(sys.argv) > 2 else 8.0
 baud = int(sys.argv[3]) if len(sys.argv) > 3 else 115200
 
@@ -35,7 +42,9 @@ baud = int(sys.argv[3]) if len(sys.argv) > 3 else 115200
 # it is only a label for the interpretation line.
 layout, cfg_path = _diag.load_layout()
 
-print(f"[read_serial] Opening {port} @ {baud} for {secs}s...", flush=True)
+how = " (auto-detected)" if auto else ""
+print(f"[read_serial] Opening {port}{how} @ {baud} for {secs}s...",
+      flush=True)
 print(f"[read_serial] Interpreting with: {cfg_path or 'built-in defaults'}",
       flush=True)
 ser = serial.Serial(port, baud, timeout=0.2)
